@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleNetworking.Networking
@@ -10,6 +11,7 @@ namespace SimpleNetworking.Networking
     public abstract class NetworkTransport
     {
         protected Stream stream;
+        protected CancellationToken cancellationToken;
         private enum PacketTypes { KeepAlive = 0, DataPacket = 1 }
 
         public event DataReceivedHandler OnDataReceived;
@@ -30,7 +32,18 @@ namespace SimpleNetworking.Networking
             return payload;
         }
 
-        public async Task StartReading()
+        public void StartReading()
+        {
+            Task.Run(async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await ListenLoop();
+                }
+            });
+        }
+
+        private async Task ListenLoop()
         {
             int headerLength = sizeof(byte) + sizeof(int);
 
@@ -39,6 +52,7 @@ namespace SimpleNetworking.Networking
             int payloadSize = BitConverter.ToInt32(header, 1);
 
             byte[] payload = await ReadData(payloadSize);
+
             OnDataReceived?.Invoke(payload);
         }
 
@@ -48,8 +62,8 @@ namespace SimpleNetworking.Networking
             int offset = 0;
             do
             {
-                offset += await stream.ReadAsync(data, offset, length - offset);
-            } while (offset < length);
+                offset += await stream.ReadAsync(data, offset, length - offset, cancellationToken);
+            } while (offset < length && !cancellationToken.IsCancellationRequested);
             return data;
         }
 

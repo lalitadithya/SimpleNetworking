@@ -12,9 +12,10 @@ namespace SimpleNetworking.Tests.Networking
     #region Concrete classe for abstract class
     public class ConcreteNetworkTransport : NetworkTransport
     {
-        public ConcreteNetworkTransport(Stream stream)
+        public ConcreteNetworkTransport(Stream stream, CancellationToken cancellationToken)
         {
             this.stream = stream;
+            this.cancellationToken = cancellationToken;
         }
     }
     #endregion
@@ -26,7 +27,7 @@ namespace SimpleNetworking.Tests.Networking
         public async Task SendShouldAddPacketTypeInHeader()
         {
             MemoryStream stream = new MemoryStream();
-            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream);
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
 
             await networkTransport.SendData(new byte[] { 100, 101 });
             GetHeaderFromStream(stream, out byte packetType, out int length);
@@ -38,7 +39,7 @@ namespace SimpleNetworking.Tests.Networking
         public async Task SendShouldAddPacketLengthInHeader()
         {
             MemoryStream stream = new MemoryStream();
-            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream);
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
 
             await networkTransport.SendData(new byte[] { 100, 101 });
             GetHeaderFromStream(stream, out byte packetType, out int length);
@@ -51,7 +52,7 @@ namespace SimpleNetworking.Tests.Networking
         public async Task SendShouldWritePayloadAfterHeader()
         {
             MemoryStream stream = new MemoryStream();
-            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream);
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
 
             byte[] payloadSent = new byte[] { 100, 101 };
             await networkTransport.SendData(payloadSent);
@@ -67,7 +68,7 @@ namespace SimpleNetworking.Tests.Networking
         public void ReceiveShouldContainCorrectData()
         {
             MemoryStream stream = new MemoryStream();
-            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream);
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
             byte[] payloadRecived = null;
             networkTransport.OnDataReceived += (data) => 
             {
@@ -85,6 +86,39 @@ namespace SimpleNetworking.Tests.Networking
 
             Thread.Sleep(100);
 
+            CollectionAssert.AreEqual(payloadSent, payloadRecived);
+        }
+
+        [Test]
+        public void ReceiveShouldContainCorrectDataMoreThanOnce()
+        {
+            MemoryStream stream = new MemoryStream();
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
+            byte[] payloadRecived = null;
+            networkTransport.OnDataReceived += (data) =>
+            {
+                payloadRecived = data;
+            };
+
+            byte[] payloadSent = new byte[] { 100, 101 };
+            byte[] payload = ConstructPayload(payloadSent);
+            stream.Write(payload, 0, payload.Length);
+            stream.Position = 0;
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            networkTransport.StartReading();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+            Thread.Sleep(100);
+            CollectionAssert.AreEqual(payloadSent, payloadRecived);
+
+            long lastRead = stream.Position;
+            payloadSent = new byte[] { 102, 104 };
+            payload = ConstructPayload(payloadSent);
+            stream.Write(payload, 0, payload.Length);
+            stream.Position = lastRead;
+
+            Thread.Sleep(500);
             CollectionAssert.AreEqual(payloadSent, payloadRecived);
         }
 
