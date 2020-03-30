@@ -22,17 +22,35 @@ namespace SimpleNetworking.Networking
 
         private static byte[] ConstructPayload(byte[] data)
         {
-            byte[] payload = new byte[sizeof(byte) + sizeof(long) + data.LongLength];
+            byte[] payload = new byte[sizeof(byte) + sizeof(int) + data.Length];
             payload[0] = (byte)PacketTypes.DataPacket;
-            byte[] lengthInBytes = BitConverter.GetBytes(data.LongLength);
-            Array.Copy(lengthInBytes, 0, payload, 1, lengthInBytes.LongLength);
-            Array.Copy(data, 0, payload, 1 + sizeof(long), data.LongLength);
+            byte[] lengthInBytes = BitConverter.GetBytes(data.Length);
+            Array.Copy(lengthInBytes, 0, payload, 1, lengthInBytes.Length);
+            Array.Copy(data, 0, payload, 1 + sizeof(int), data.Length);
             return payload;
         }
 
-        public void StartReading()
+        public async Task StartReading()
         {
-            throw new NotImplementedException();
+            int headerLength = sizeof(byte) + sizeof(int);
+
+            byte[] header = await ReadData(headerLength);
+            PacketTypes packetType = (PacketTypes)header[0];
+            int payloadSize = BitConverter.ToInt32(header, 1);
+
+            byte[] payload = await ReadData(payloadSize);
+            OnDataReceived?.Invoke(payload);
+        }
+
+        private async Task<byte[]> ReadData(int length)
+        {
+            byte[] data = new byte[length];
+            int offset = 0;
+            do
+            {
+                offset += await stream.ReadAsync(data, offset, length - offset);
+            } while (offset < length);
+            return data;
         }
 
         #region IDisposable Support
