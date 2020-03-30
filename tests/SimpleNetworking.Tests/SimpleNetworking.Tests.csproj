@@ -14,9 +14,12 @@
 
   <ItemGroup>
     <Folder Include="Client\" />
-    <Folder Include="Networking\" />
     <Folder Include="Serializer\" />
     <Folder Include="Server\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SimpleNetworking\SimpleNetworking.csproj" />
   </ItemGroup>
 
 </Project>

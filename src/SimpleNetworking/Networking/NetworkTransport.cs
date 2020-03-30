@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SimpleNetworking.Networking
 {
@@ -9,12 +10,24 @@ namespace SimpleNetworking.Networking
     public abstract class NetworkTransport
     {
         protected Stream stream;
+        private enum PacketTypes { KeepAlive = 0, DataPacket = 1 }
 
         public event DataReceivedHandler OnDataReceived;
 
-        public void SendData(byte[] data)
+        public async Task SendData(byte[] data)
         {
-            throw new NotImplementedException();
+            byte[] payload = ConstructPayload(data);
+            await stream.WriteAsync(payload);
+        }
+
+        private static byte[] ConstructPayload(byte[] data)
+        {
+            byte[] payload = new byte[sizeof(byte) + sizeof(long) + data.LongLength];
+            payload[0] = (byte)PacketTypes.DataPacket;
+            byte[] lengthInBytes = BitConverter.GetBytes(data.LongLength);
+            Array.Copy(lengthInBytes, 0, payload, 1, lengthInBytes.LongLength);
+            Array.Copy(data, 0, payload, 1 + sizeof(long), data.LongLength);
+            return payload;
         }
 
         public void StartReading()
