@@ -3,9 +3,50 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CB37AE9B-3ACE-4260-82CC-187A0D44B526}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{BD2D51B8-9309-4B07-AE43-58A1E172547E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B233F04C-FC75-4217-A7C3-3797E4ABCD0D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}"
+	ProjectSection(SolutionItems) = preProject
+		samples\README.md = samples\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9E60ABDB-1672-497B-A23A-79D299B1F270}"
+	ProjectSection(SolutionItems) = preProject
+		docs\README.md = docs\README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNetworking", "src\SimpleNetworking\SimpleNetworking.csproj", "{0EFE4EB8-98B8-41C9-9071-89FD2B57735A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleNetworking.Tests", "tests\SimpleNetworking.Tests\SimpleNetworking.Tests.csproj", "{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A} = {CB37AE9B-3ACE-4260-82CC-187A0D44B526}
+		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826} = {BD2D51B8-9309-4B07-AE43-58A1E172547E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0EDBAAFB-3FA4-47D3-8A25-27340710D664}
