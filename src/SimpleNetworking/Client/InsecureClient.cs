@@ -7,12 +7,10 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
-        private ITcpNetworkTransport networkTransport;
-
         public void Connect(string hostName, int port)
         {
             networkTransport = new TcpNetworkTransport();
-            networkTransport.Connect(hostName, port);
+            ((IInsecureClient)networkTransport).Connect(hostName, port);
         }
     }
 }
