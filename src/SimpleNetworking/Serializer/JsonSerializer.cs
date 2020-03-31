@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,12 +9,12 @@ namespace SimpleNetworking.Serializer
     {
         public object Deserilize<T>(byte[] data)
         {
-            throw new NotImplementedException();
+            return (T)JsonConvert.DeserializeObject(Encoding.Unicode.GetString(data));
         }
 
         public byte[] Serilize(object data)
         {
-            throw new NotImplementedException();
+            return Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(data));
         }
     }
 }
