@@ -25,6 +25,7 @@ namespace SimpleNetworking.Server
             this.serializer = serializer;
 
             tcpListener = new TcpListener(localAddress, port);
+            tcpListener.Start();
             AcceptLoop();
         }
 
