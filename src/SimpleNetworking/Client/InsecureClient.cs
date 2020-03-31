@@ -8,6 +8,13 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
+        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)
+        {
+            this.serializer = serializer;
+            this.networkTransport = tcpNetworkTransport;
+            networkTransport.OnDataReceived += DataReceived;
+        }
+
         public void Connect(string hostName, int port, ISerializer serializer)
         {
             this.serializer = serializer;
