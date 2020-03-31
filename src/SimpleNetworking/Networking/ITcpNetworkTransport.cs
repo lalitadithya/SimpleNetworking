@@ -7,6 +7,6 @@ namespace SimpleNetworking.Networking
 {
     public interface ITcpNetworkTransport 
     {
-        void Connect(string hostName, long port);
+        void Connect(string hostName, int port);
     }
 }
