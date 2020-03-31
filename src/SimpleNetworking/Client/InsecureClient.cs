@@ -8,6 +8,11 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
+        public InsecureClient()
+        {
+            //nothing
+        }
+
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)
         {
             this.serializer = serializer;
