@@ -6,6 +6,6 @@ namespace SimpleNetworking.Client
 {
     public interface IInsecureClient : IClient
     {
-        void Connect(string hostName, long port);
+        void Connect(string hostName, int port);
     }
 }

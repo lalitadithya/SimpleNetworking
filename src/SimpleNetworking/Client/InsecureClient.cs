@@ -9,9 +9,10 @@ namespace SimpleNetworking.Client
     {
         private ITcpNetworkTransport networkTransport;
 
-        public void Connect(string hostName, long port)
+        public void Connect(string hostName, int port)
         {
-            throw new NotImplementedException();
+            networkTransport = new TcpNetworkTransport();
+            networkTransport.Connect(hostName, port);
         }
     }
 }
