@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SimpleNetworking.Client
 {
@@ -9,6 +10,6 @@ namespace SimpleNetworking.Client
     public interface IClient
     {
         event PacketReceivedHandler OnPacketReceived;
-        void SendData(Packet packet);
+        Task SendData(IPayload packet);
     }
 }
