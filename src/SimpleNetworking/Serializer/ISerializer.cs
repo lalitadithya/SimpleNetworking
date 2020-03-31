@@ -7,6 +7,6 @@ namespace SimpleNetworking.Serializer
     public interface ISerializer
     {
         byte[] Serilize(object data);
-        object Deserilize<T>(byte[] data);
+        object Deserilize(byte[] data, Type objectType);
     }
 }
