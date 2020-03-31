@@ -5,6 +5,7 @@ using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleNetworking.Tests.Client
@@ -20,6 +21,7 @@ namespace SimpleNetworking.Tests.Client
             {
                 this.networkTransport = networkTransport;
                 this.serializer = serializer;
+                networkTransport.OnDataReceived += DataReceived;
             }
         }
 
@@ -30,6 +32,15 @@ namespace SimpleNetworking.Tests.Client
             {
                 Data = data;
                 return Task.FromResult(true);
+            }
+            override public void StartReading()
+            {
+                // do nothing
+            }
+
+            public void InvokeDataReceived(byte[] data)
+            {
+                RaiseOnDataReceivedEvent(data);
             }
         }
 
@@ -54,7 +65,7 @@ namespace SimpleNetworking.Tests.Client
             await clientConcrete.SendData(myData);
 
             Packet packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
-            Assert.AreEqual(typeof(MyData).ToString(), packet.PacketHeader.ClassType);
+            Assert.AreEqual(typeof(MyData).AssemblyQualifiedName.ToString(), packet.PacketHeader.ClassType);
         }
 
         [Test]
@@ -113,6 +124,42 @@ namespace SimpleNetworking.Tests.Client
             await clientConcrete.SendData(myData);
             packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
             Assert.AreEqual(3, packet.PacketHeader.SequenceNumber);
+        }
+
+        [Test]
+        public void ReadShouldReturnCorrectData()
+        {
+            NetworkTransportMock networkTransport = new NetworkTransportMock();
+            JsonSerializer serializer = new JsonSerializer();
+            ClientConcrete clientConcrete = new ClientConcrete(networkTransport, serializer);
+            MyData myData = new MyData
+            {
+                Name = "John Doe"
+            };
+            MyData myDataRecieved = null;
+            clientConcrete.OnPacketReceived += (packet) =>
+            {
+                myDataRecieved = (MyData)packet;
+            };
+
+            networkTransport.InvokeDataReceived(serializer.Serilize(ConstructPacket(myData, 1)));
+
+            Assert.AreEqual(myData.Name, myDataRecieved.Name);
+        }
+
+
+        private Packet ConstructPacket(object payload, long sequenceNumber)
+        {
+            return new Packet
+            {
+                PacketHeader = new Header
+                {
+                    ClassType = payload.GetType().AssemblyQualifiedName.ToString(),
+                    IdempotencyToken = Guid.NewGuid().ToString(),
+                    SequenceNumber = sequenceNumber
+                },
+                PacketPayload = payload
+            };
         }
     }
 }

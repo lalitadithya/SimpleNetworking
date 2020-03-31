@@ -1,4 +1,5 @@
-﻿using SimpleNetworking.Models;
+﻿using Newtonsoft.Json.Linq;
+using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
 using SimpleNetworking.Serializer;
 using System;
@@ -28,7 +29,7 @@ namespace SimpleNetworking.Client
                 {
                     PacketHeader = new Header
                     {
-                        ClassType = payload.GetType().ToString(),
+                        ClassType = payload.GetType().AssemblyQualifiedName.ToString(),
                         IdempotencyToken = Guid.NewGuid().ToString(),
                         SequenceNumber = Interlocked.Increment(ref sendSequenceNumber)
                     },
@@ -45,7 +46,7 @@ namespace SimpleNetworking.Client
         protected void DataReceived(byte[] data)
         {
             Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
-            OnPacketReceived?.Invoke(packet.PacketPayload);
+            OnPacketReceived?.Invoke((packet.PacketPayload as JObject).ToObject(Type.GetType(packet.PacketHeader.ClassType)));
         }
     }
 }

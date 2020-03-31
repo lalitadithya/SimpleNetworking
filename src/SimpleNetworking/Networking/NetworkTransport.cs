@@ -32,7 +32,7 @@ namespace SimpleNetworking.Networking
             return payload;
         }
 
-        public void StartReading()
+        public virtual void StartReading()
         {
             Task.Run(async () =>
             {
@@ -53,6 +53,11 @@ namespace SimpleNetworking.Networking
 
             byte[] payload = await ReadData(payloadSize);
 
+            RaiseOnDataReceivedEvent(payload);
+        }
+
+        protected void RaiseOnDataReceivedEvent(byte[] payload)
+        {
             OnDataReceived?.Invoke(payload);
         }
 
