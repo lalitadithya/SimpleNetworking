@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace SimpleNetworking.Client
 {
-    public delegate void PacketReceivedHandler(Packet packet);
+    public delegate void PacketReceivedHandler(object data);
     public interface IClient
     {
         event PacketReceivedHandler OnPacketReceived;
-        Task SendData(IPayload packet);
+        Task SendData(object packet);
     }
 }

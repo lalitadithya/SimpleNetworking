@@ -4,30 +4,48 @@ using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleNetworking.Client
 {
     public abstract class Client : IClient
     {
+        private long sendSequenceNumber = 0;
+        private SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
+
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
 
         public event PacketReceivedHandler OnPacketReceived;
 
-        public async Task SendData(IPayload payload)
+        public async Task SendData(object payload)
         {
-            Packet packet = new Packet
+            await sendSemaphore.WaitAsync();
+            try
             {
-                PacketHeader = new Header
+                Packet packet = new Packet
                 {
-                    ClassType = payload.GetType().ToString(),
-                    IdempotencyToken = Guid.NewGuid().ToString(),
-                    SequenceNumber = 0
-                },
-                PacketPayload = payload
-            };
-            await networkTransport.SendData(serializer.Serilize(packet));
+                    PacketHeader = new Header
+                    {
+                        ClassType = payload.GetType().ToString(),
+                        IdempotencyToken = Guid.NewGuid().ToString(),
+                        SequenceNumber = Interlocked.Increment(ref sendSequenceNumber)
+                    },
+                    PacketPayload = payload
+                };
+                await networkTransport.SendData(serializer.Serilize(packet));
+            }
+            finally
+            {
+                sendSemaphore.Release();
+            }
+        }
+
+        protected void DataReceived(byte[] data)
+        {
+            Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
+            OnPacketReceived?.Invoke(packet.PacketPayload);
         }
     }
 }

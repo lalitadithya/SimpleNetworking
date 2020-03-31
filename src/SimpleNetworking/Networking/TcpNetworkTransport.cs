@@ -13,6 +13,7 @@ namespace SimpleNetworking.Networking
         {
             tcpClient = new TcpClient(hostName, port);
             stream = tcpClient.GetStream();
+            StartReading();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace SimpleNetworking.Networking
 
         public event DataReceivedHandler OnDataReceived;
 
-        public async Task SendData(byte[] data)
+        public virtual async Task SendData(byte[] data)
         {
             byte[] payload = ConstructPayload(data);
             await stream.WriteAsync(payload);

@@ -13,6 +13,7 @@ namespace SimpleNetworking.Client
             this.serializer = serializer;
             networkTransport = new TcpNetworkTransport();
             ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
+            networkTransport.OnDataReceived += DataReceived;
         }
     }
 }

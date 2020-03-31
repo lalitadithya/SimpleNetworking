@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleNetworking.Models
 {
-    public interface IPayload
+    public class IPayload
     {
     }
 }
