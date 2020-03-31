@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -9,9 +10,12 @@ namespace SimpleNetworking.Networking
     {
         private TcpClient tcpClient; 
 
-        public TcpNetworkTransport()
+        public TcpNetworkTransport(ILoggerFactory loggerFactory = null)
         {
-            // nothing
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
+            }
         }
 
         internal TcpNetworkTransport(TcpClient tcpClient)

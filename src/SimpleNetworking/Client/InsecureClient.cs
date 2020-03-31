@@ -1,4 +1,5 @@
-﻿using SimpleNetworking.Networking;
+﻿using Microsoft.Extensions.Logging;
+using SimpleNetworking.Networking;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
@@ -8,9 +9,12 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
-        public InsecureClient()
+        public InsecureClient(ILoggerFactory loggerFactory = null)
         {
-            //nothing
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<InsecureClient>();
+            }
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)

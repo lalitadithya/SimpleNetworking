@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
 using SimpleNetworking.Serializer;
@@ -17,6 +18,7 @@ namespace SimpleNetworking.Client
 
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
+        protected ILogger logger;
 
         public event PacketReceivedHandler OnPacketReceived;
 
@@ -46,7 +48,19 @@ namespace SimpleNetworking.Client
         protected void DataReceived(byte[] data)
         {
             Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
-            OnPacketReceived?.Invoke((packet.PacketPayload as JObject).ToObject(Type.GetType(packet.PacketHeader.ClassType)));
+            InvokeDataReceivedEvent(packet);
+        }
+
+        private void InvokeDataReceivedEvent(Packet packet)
+        {
+            try
+            {
+                OnPacketReceived?.Invoke((packet.PacketPayload as JObject).ToObject(Type.GetType(packet.PacketHeader.ClassType)));
+            }
+            catch (Exception exception)
+            {
+                logger?.LogError(exception, "OnPacketReceived threw an exception");
+            }
         }
     }
 }

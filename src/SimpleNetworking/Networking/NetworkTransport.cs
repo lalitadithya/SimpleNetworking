@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -12,6 +13,8 @@ namespace SimpleNetworking.Networking
     {
         protected Stream stream;
         protected CancellationToken cancellationToken;
+        protected ILogger logger;
+
         private enum PacketTypes { KeepAlive = 0, DataPacket = 1 }
 
         public event DataReceivedHandler OnDataReceived;
@@ -58,7 +61,14 @@ namespace SimpleNetworking.Networking
 
         protected void RaiseOnDataReceivedEvent(byte[] payload)
         {
-            OnDataReceived?.Invoke(payload);
+            try
+            {
+                OnDataReceived?.Invoke(payload);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "OnDataReceived threw an exception");
+            }
         }
 
         private async Task<byte[]> ReadData(int length)

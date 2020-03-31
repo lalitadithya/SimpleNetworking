@@ -1,4 +1,8 @@
-﻿using SimpleNetworking.Client;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
+using SimpleNetworking.Client;
 using SimpleNetworking.Serializer;
 using SimpleNetworking.Server;
 using System;
@@ -21,6 +25,10 @@ namespace BasicSample
         static void Main(string[] args)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
+
+            var serviceProvider = new ServiceCollection().AddLogging(opt => opt.AddConsole())
+                                                         .BuildServiceProvider();
+            ILoggerFactory factory = serviceProvider.GetService<ILoggerFactory>();
             Console.WriteLine("1 -> Client");
             Console.WriteLine("2 -> Server");
             int choice = int.Parse(Console.ReadLine());
@@ -28,7 +36,7 @@ namespace BasicSample
             {
                 case 1:
                     type = "client";
-                    client = new InsecureClient();
+                    client = new InsecureClient(factory);
                     client.OnPacketReceived += Client_OnPacketReceived;
                     client.Connect("localhost", 9000, new JsonSerializer());
                     Console.WriteLine("Connect success");
