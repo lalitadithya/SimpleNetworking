@@ -14,7 +14,7 @@ namespace SimpleNetworking.Client
     public abstract class Client : IClient
     {
         private long sendSequenceNumber = 0;
-        private SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
 
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
@@ -31,6 +31,7 @@ namespace SimpleNetworking.Client
                 {
                     PacketHeader = new Header
                     {
+                        PacketType = Header.PacketTypes.Data,
                         ClassType = payload.GetType().AssemblyQualifiedName.ToString(),
                         IdempotencyToken = Guid.NewGuid().ToString(),
                         SequenceNumber = Interlocked.Increment(ref sendSequenceNumber)

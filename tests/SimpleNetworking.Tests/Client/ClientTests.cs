@@ -154,6 +154,7 @@ namespace SimpleNetworking.Tests.Client
             {
                 PacketHeader = new Header
                 {
+                    PacketType = Header.PacketTypes.Data,
                     ClassType = payload.GetType().AssemblyQualifiedName.ToString(),
                     IdempotencyToken = Guid.NewGuid().ToString(),
                     SequenceNumber = sequenceNumber
