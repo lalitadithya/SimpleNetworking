@@ -18,28 +18,26 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
-        public InsecureClient(CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000)
+        public InsecureClient(ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000)
         {
             this.cancellationToken = cancellationToken;
             delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
-            Init(loggerFactory, maximumPacketBacklog, expiryTime);
+            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer);
             id = Guid.NewGuid().ToString();
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
         {
             this.cancellationToken = cancellationToken;
-            this.serializer = serializer;
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
 
-            Init(loggerFactory, maximumPacketBacklog, expiryTime);
+            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer);
         }
 
-        public async void Connect(string hostName, int port, ISerializer serializer)
+        public async void Connect(string hostName, int port)
         {
-            this.serializer = serializer;
             this.hostName = hostName;
             this.port = port;
             networkTransport = new TcpNetworkTransport(cancellationToken);
@@ -74,7 +72,7 @@ namespace SimpleNetworking.Client
             Task.Run(async () => await Reconnect());
         }
 
-        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime)
+        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime, ISerializer serializer)
         {
             if (loggerFactory != null)
             {
@@ -82,6 +80,7 @@ namespace SimpleNetworking.Client
             }
             this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
             this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
+            this.serializer = serializer;
         }
     }
 }

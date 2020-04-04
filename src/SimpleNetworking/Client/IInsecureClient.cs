@@ -8,7 +8,7 @@ namespace SimpleNetworking.Client
 {
     public interface IInsecureClient : IClient
     {
-        void Connect(string hostName, int port, ISerializer serializer);
+        void Connect(string hostName, int port);
         void ClientReconnected(TcpNetworkTransport networkTransport);
     }
 }
