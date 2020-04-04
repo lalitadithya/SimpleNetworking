@@ -21,7 +21,7 @@ namespace SimpleNetworking.Client
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
         protected ILogger logger;
-        protected ISimpleIdempotencyService<Guid, Packet> idempotencyService; 
+        protected ISendIdempotencyService<Guid, Packet> idempotencyService; 
 
         public event PacketReceivedHandler OnPacketReceived;
 

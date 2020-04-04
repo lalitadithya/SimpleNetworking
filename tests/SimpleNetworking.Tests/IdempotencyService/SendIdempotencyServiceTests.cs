@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SimpleNetworking.Tests.IdempotencyService
 {
     [TestFixture]
-    public class SimpleIdempotencyServiceTests
+    public class SendIdempotencyServiceTests
     {
         public class TestClass
         {
@@ -25,7 +25,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldBeAbleToAddData()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(10);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(10);
             TestClass testClass = new TestClass(42);
             bool result = await simpleIdempotencyService.Add(1, testClass);
             Assert.IsTrue(result);
@@ -34,7 +34,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldBlockAfterPacketLimitExceeds()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(2);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(2);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             await simpleIdempotencyService.Add(2, new TestClass(43));
             bool taskCompleted = simpleIdempotencyService.Add(3, new TestClass(44)).Wait(2 * 1000);
@@ -44,7 +44,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldRemoveValueBasedOnKey()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(2);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(2);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             Assert.IsTrue(simpleIdempotencyService.Remove(1, out TestClass value));
             Assert.AreEqual(42, value.Value);
@@ -53,7 +53,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldUnblockAfterPacketLimitIsNoLongerExceeded()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(2);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(2);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             await simpleIdempotencyService.Add(2, new TestClass(43));
             Task<bool> thirdAdd = Task.Run(() => simpleIdempotencyService.Add(3, new TestClass(44)).Wait(5 * 1000));
@@ -64,7 +64,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldEnumurateValues()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(2);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(2);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             await simpleIdempotencyService.Add(2, new TestClass(43));
 
@@ -78,7 +78,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldNotEnumurateValuesThatAreRemoved()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(2);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(2);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             await simpleIdempotencyService.Add(2, new TestClass(43));
 
@@ -102,7 +102,7 @@ namespace SimpleNetworking.Tests.IdempotencyService
         [Test]
         public async Task IdempotencyServiceShouldNotEnumurateValuesThatAreRemoved1()
         {
-            ISimpleIdempotencyService<int, TestClass> simpleIdempotencyService = new SimpleIdempotencyService<int, TestClass>(3);
+            ISendIdempotencyService<int, TestClass> simpleIdempotencyService = new SendIdempotencyService<int, TestClass>(3);
             await simpleIdempotencyService.Add(1, new TestClass(42));
             await simpleIdempotencyService.Add(2, new TestClass(43));
             await simpleIdempotencyService.Add(3, new TestClass(44));

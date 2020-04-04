@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace SimpleNetworking.IdempotencyService
 {
-    public class SimpleIdempotencyService<K, T> : ISimpleIdempotencyService<K, T>
+    public class SendIdempotencyService<K, T> : ISendIdempotencyService<K, T>
     {
         private readonly int maximumNumberOfPackets;
         private readonly ConcurrentDictionary<K, T> packets;
         private readonly AutoResetEvent maximumPacketLimitExceededEvent;
         private readonly SemaphoreSlim addSemaphoreSlim;
 
-        public SimpleIdempotencyService(int maximumNumberOfPackets)
+        public SendIdempotencyService(int maximumNumberOfPackets)
         {
             this.maximumNumberOfPackets = maximumNumberOfPackets;
             packets = new ConcurrentDictionary<K, T>();

@@ -17,7 +17,7 @@ namespace SimpleNetworking.Client
             {
                 logger = loggerFactory.CreateLogger<InsecureClient>();
             }
-            this.idempotencyService = new SimpleIdempotencyService<Guid, Packet>(maximumPacketBacklog);
+            this.idempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)

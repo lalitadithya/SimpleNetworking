@@ -23,7 +23,7 @@ namespace SimpleNetworking.Tests.Client
             {
                 this.networkTransport = networkTransport;
                 this.serializer = serializer;
-                this.idempotencyService = new SimpleIdempotencyService<Guid, Packet>(10);
+                this.idempotencyService = new SendIdempotencyService<Guid, Packet>(10);
                 networkTransport.OnDataReceived += DataReceived;
                 if (packetResendTime.HasValue)
                 {
