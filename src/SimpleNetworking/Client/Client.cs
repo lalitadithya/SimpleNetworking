@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
+using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,12 @@ namespace SimpleNetworking.Client
         protected ILogger logger;
         protected ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
         protected IReceiveIdempotencyService<string> receiveIdempotencyService;
+        protected ISequenceGenerator delaySequenceGenerator;
+        protected CancellationToken cancellationToken;
 
         public event PacketReceivedHandler OnPacketReceived;
+
+        protected abstract Task Connect();
 
         public async Task SendData(object payload)
         {
@@ -74,6 +79,25 @@ namespace SimpleNetworking.Client
                         InvokeDataReceivedEvent(packet);
                     }
                     break;
+            }
+        }
+
+        protected async Task Reconnect()
+        {
+            IEnumerator<int> delayEnumerator = delaySequenceGenerator.GetEnumerator();
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await Connect();
+                    break;
+                }
+                catch (Exception e)
+                {
+                    logger?.LogWarning(e, "Reconnection failed");
+                    delayEnumerator.MoveNext();
+                    await Task.Delay(delayEnumerator.Current);
+                }
             }
         }
 

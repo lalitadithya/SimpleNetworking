@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace SimpleNetworking.Networking
 {
@@ -10,16 +11,19 @@ namespace SimpleNetworking.Networking
     {
         private TcpClient tcpClient; 
 
-        public TcpNetworkTransport(ILoggerFactory loggerFactory = null)
+        public TcpNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory = null)
         {
+            this.cancellationToken = cancellationToken;
+            cancellationToken.Register(() => Stop());
             if (loggerFactory != null)
             {
                 logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
             }
         }
 
-        internal TcpNetworkTransport(TcpClient tcpClient)
+        internal TcpNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient)
         {
+            this.cancellationToken = cancellationToken;
             this.tcpClient = tcpClient;
             Initialize();
         }
@@ -34,6 +38,12 @@ namespace SimpleNetworking.Networking
         {
             stream = tcpClient.GetStream();
             StartReading();
+        }
+
+        private void Stop()
+        {
+            DropConnection();
+            tcpClient?.Close();
         }
     }
 }

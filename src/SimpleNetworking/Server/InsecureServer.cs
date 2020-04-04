@@ -31,6 +31,8 @@ namespace SimpleNetworking.Server
             this.cancellationToken = cancellationToken;
             this.serializer = serializer;
 
+            cancellationToken.Register(() => Stop());
+
             tcpListener = new TcpListener(localAddress, port);
             tcpListener.Start();
             AcceptLoop();
@@ -50,7 +52,7 @@ namespace SimpleNetworking.Server
 
         private void ProcessClient(TcpClient client)
         {
-            TcpNetworkTransport tcpNetworkTransport = new TcpNetworkTransport(client);
+            TcpNetworkTransport tcpNetworkTransport = new TcpNetworkTransport(cancellationToken, client);
             AutoResetEvent handshakeCompleteEvent = new AutoResetEvent(false);
 
             string clientId = "";
@@ -72,7 +74,7 @@ namespace SimpleNetworking.Server
                 }
                 else
                 {
-                    InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, serializer);
+                    InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, serializer, cancellationToken);
                     clients.TryAdd(clientId, insecureClient);
                     OnClientConnected?.Invoke(insecureClient);
                 }
@@ -84,6 +86,11 @@ namespace SimpleNetworking.Server
                 client.Close();
                 client.Dispose();
             }
+        }
+
+        private void Stop()
+        {
+            tcpListener?.Stop();
         }
     }
 }

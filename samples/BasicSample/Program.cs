@@ -36,7 +36,7 @@ namespace BasicSample
             {
                 case 1:
                     type = "client";
-                    client = new InsecureClient(factory);
+                    client = new InsecureClient(cts.Token, factory);
                     client.OnPacketReceived += Client_OnPacketReceived;
                     client.Connect("localhost", 9000, new JsonSerializer());
                     Console.WriteLine("Connect success");
@@ -49,6 +49,8 @@ namespace BasicSample
                     break;
             }
 
+            Console.ReadKey();
+            cts.Cancel();
             Console.ReadKey();
         }
 

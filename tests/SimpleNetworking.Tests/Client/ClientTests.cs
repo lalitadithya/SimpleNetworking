@@ -36,6 +36,11 @@ namespace SimpleNetworking.Tests.Client
             {
                 base.StopPacketResend();
             }
+
+            protected override Task Connect()
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public class NetworkTransportMock : NetworkTransport

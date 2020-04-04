@@ -2,10 +2,12 @@
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
+using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleNetworking.Client
@@ -16,14 +18,17 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
-        public InsecureClient(ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
+        public InsecureClient(CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000)
         {
+            this.cancellationToken = cancellationToken;
+            delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
             Init(loggerFactory, maximumPacketBacklog, expiryTime);
             id = Guid.NewGuid().ToString();
         }
 
-        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
+        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
         {
+            this.cancellationToken = cancellationToken;
             this.serializer = serializer;
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
@@ -36,17 +41,9 @@ namespace SimpleNetworking.Client
             this.serializer = serializer;
             this.hostName = hostName;
             this.port = port;
-            networkTransport = new TcpNetworkTransport();
+            networkTransport = new TcpNetworkTransport(cancellationToken);
 
-            await Connect(hostName, port);
-        }
-
-        private async Task Connect(string hostName, int port)
-        {
-            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
-            networkTransport.OnDataReceived += DataReceived;
-            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLost;
-            await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+            await Connect();
         }
 
         public void ClientReconnected(TcpNetworkTransport networkTransport)
@@ -55,24 +52,17 @@ namespace SimpleNetworking.Client
             networkTransport.OnDataReceived += DataReceived;
         }
 
+        protected override async Task Connect()
+        {
+            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
+            networkTransport.OnDataReceived += DataReceived;
+            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLost;
+            await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+        }
+
         private void NetworkTransport_OnConnectionLost()
         {
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    try
-                    {
-                        await Connect(hostName, port);
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        logger?.LogWarning(e, "Reconnection failed");
-                        await Task.Delay(10 * 1000);
-                    }
-                }
-            });
+            Task.Run(async () => await Reconnect());
         }
 
         private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime)

@@ -108,12 +108,12 @@ namespace SimpleNetworking.Networking
             return data;
         }
 
-        private void DropConnection()
+        protected void DropConnection()
         {
             try
             {
-                stream.Close();
-                stream.Dispose();
+                stream?.Close();
+                stream?.Dispose();
                 OnConnectionLost?.Invoke();
             }
             catch (Exception e)
