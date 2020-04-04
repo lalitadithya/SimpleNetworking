@@ -89,39 +89,6 @@ namespace SimpleNetworking.Tests.Networking
             CollectionAssert.AreEqual(payloadSent, payloadRecived);
         }
 
-        [Test]
-        public void ReceiveShouldContainCorrectDataMoreThanOnce()
-        {
-            MemoryStream stream = new MemoryStream();
-            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
-            byte[] payloadRecived = null;
-            networkTransport.OnDataReceived += (data) =>
-            {
-                payloadRecived = data;
-            };
-
-            byte[] payloadSent = new byte[] { 100, 101 };
-            byte[] payload = ConstructPayload(payloadSent);
-            stream.Write(payload, 0, payload.Length);
-            stream.Position = 0;
-
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            networkTransport.StartReading();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-
-            Thread.Sleep(1000);
-            CollectionAssert.AreEqual(payloadSent, payloadRecived);
-
-            long lastRead = stream.Position;
-            payloadSent = new byte[] { 102, 104 };
-            payload = ConstructPayload(payloadSent);
-            stream.Write(payload, 0, payload.Length);
-            stream.Position = lastRead;
-
-            Thread.Sleep(500);
-            CollectionAssert.AreEqual(payloadSent, payloadRecived);
-        }
-
         private void GetHeaderFromStream(Stream stream, out byte packetType, out int length)
         {
             long currentPosition = stream.Position;

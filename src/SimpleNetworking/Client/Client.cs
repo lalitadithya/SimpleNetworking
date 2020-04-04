@@ -43,12 +43,17 @@ namespace SimpleNetworking.Client
                     PacketPayload = payload
                 };
                 await idempotencyService.Add(idempotencyToken, packet);
-                await networkTransport.SendData(serializer.Serilize(packet));
+                await SendDataUsingTransport(packet);
             }
             finally
             {
                 sendSemaphore.Release();
             }
+        }
+
+        private async Task SendDataUsingTransport(Packet packet)
+        {
+            await networkTransport.SendData(serializer.Serilize(packet));
         }
 
         protected void DataReceived(byte[] data)
@@ -77,11 +82,11 @@ namespace SimpleNetworking.Client
             packetResendTimer.Dispose();
         }
 
-        private void ResendPacket(object state)
+        private async void ResendPacket(object state)
         {
             foreach(var packet in idempotencyService.GetValues())
             {
-                networkTransport.SendData(serializer.Serilize(packet)).Wait();
+                await SendDataUsingTransport(packet);
             }
         }
 
@@ -96,7 +101,7 @@ namespace SimpleNetworking.Client
                     SequenceNumber = packet.PacketHeader.SequenceNumber
                 }
             };
-            await networkTransport.SendData(serializer.Serilize(ackPacket));
+            await SendDataUsingTransport(ackPacket); 
         }
 
         private void InvokeDataReceivedEvent(Packet packet)
