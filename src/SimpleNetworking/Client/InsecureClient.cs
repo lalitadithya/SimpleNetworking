@@ -13,6 +13,8 @@ namespace SimpleNetworking.Client
     public class InsecureClient : Client, IInsecureClient
     {
         private readonly string id;
+        private string hostName;
+        private int port;
 
         public InsecureClient(ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
         {
@@ -32,9 +34,9 @@ namespace SimpleNetworking.Client
         public async void Connect(string hostName, int port, ISerializer serializer)
         {
             this.serializer = serializer;
+            this.hostName = hostName;
+            this.port = port;
             networkTransport = new TcpNetworkTransport();
-            networkTransport.OnDataReceived += DataReceived;
-            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLost;
 
             await Connect(hostName, port);
         }
@@ -42,6 +44,8 @@ namespace SimpleNetworking.Client
         private async Task Connect(string hostName, int port)
         {
             ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
+            networkTransport.OnDataReceived += DataReceived;
+            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLost;
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
         }
 
@@ -53,7 +57,22 @@ namespace SimpleNetworking.Client
 
         private void NetworkTransport_OnConnectionLost()
         {
-            // todo reconnect logic in a task
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        await Connect(hostName, port);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        logger?.LogWarning(e, "Reconnection failed");
+                        await Task.Delay(10 * 1000);
+                    }
+                }
+            });
         }
 
         private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime)
