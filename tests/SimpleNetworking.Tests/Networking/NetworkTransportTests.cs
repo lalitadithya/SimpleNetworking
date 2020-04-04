@@ -109,7 +109,7 @@ namespace SimpleNetworking.Tests.Networking
             networkTransport.StartReading();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
-            Thread.Sleep(100);
+            Thread.Sleep(1000);
             CollectionAssert.AreEqual(payloadSent, payloadRecived);
 
             long lastRead = stream.Position;

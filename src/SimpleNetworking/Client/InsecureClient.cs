@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using SimpleNetworking.IdempotencyService;
+using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
 using SimpleNetworking.Serializer;
 using System;
@@ -9,12 +11,13 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
-        public InsecureClient(ILoggerFactory loggerFactory = null)
+        public InsecureClient(ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000)
         {
             if (loggerFactory != null)
             {
                 logger = loggerFactory.CreateLogger<InsecureClient>();
             }
+            this.idempotencyService = new SimpleIdempotencyService<Guid, Packet>(maximumPacketBacklog);
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)

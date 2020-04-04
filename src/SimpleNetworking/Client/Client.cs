@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
 using SimpleNetworking.Serializer;
@@ -15,10 +16,12 @@ namespace SimpleNetworking.Client
     {
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
+        private Timer packetResendTimer;
 
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
         protected ILogger logger;
+        protected ISimpleIdempotencyService<Guid, Packet> idempotencyService; 
 
         public event PacketReceivedHandler OnPacketReceived;
 
@@ -27,17 +30,19 @@ namespace SimpleNetworking.Client
             await sendSemaphore.WaitAsync();
             try
             {
+                Guid idempotencyToken = Guid.NewGuid();
                 Packet packet = new Packet
                 {
                     PacketHeader = new Header
                     {
                         PacketType = Header.PacketTypes.Data,
                         ClassType = payload.GetType().AssemblyQualifiedName.ToString(),
-                        IdempotencyToken = Guid.NewGuid().ToString(),
+                        IdempotencyToken = idempotencyToken.ToString(),
                         SequenceNumber = Interlocked.Increment(ref sendSequenceNumber)
                     },
                     PacketPayload = payload
                 };
+                await idempotencyService.Add(idempotencyToken, packet);
                 await networkTransport.SendData(serializer.Serilize(packet));
             }
             finally
@@ -49,7 +54,49 @@ namespace SimpleNetworking.Client
         protected void DataReceived(byte[] data)
         {
             Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
-            InvokeDataReceivedEvent(packet);
+
+            switch(packet.PacketHeader.PacketType)
+            {
+                case Header.PacketTypes.Ack:
+                    idempotencyService.Remove(Guid.Parse(packet.PacketHeader.IdempotencyToken), out _);
+                    break;
+                case Header.PacketTypes.Data:
+                    SendAck(packet);
+                    InvokeDataReceivedEvent(packet);
+                    break;
+            }
+        }
+
+        protected void StartPacketResend(int millisecondsInterval)
+        {
+            packetResendTimer = new Timer(ResendPacket, null, millisecondsInterval, millisecondsInterval);
+        }
+
+        protected void StopPacketResend()
+        {
+            packetResendTimer.Dispose();
+        }
+
+        private void ResendPacket(object state)
+        {
+            foreach(var packet in idempotencyService.GetValues())
+            {
+                networkTransport.SendData(serializer.Serilize(packet)).Wait();
+            }
+        }
+
+        private async Task SendAck(Packet packet)
+        {
+            Packet ackPacket = new Packet
+            {
+                PacketHeader = new Header
+                {
+                    IdempotencyToken = packet.PacketHeader.IdempotencyToken,
+                    PacketType = Header.PacketTypes.Ack,
+                    SequenceNumber = packet.PacketHeader.SequenceNumber
+                }
+            };
+            await networkTransport.SendData(serializer.Serilize(ackPacket));
         }
 
         private void InvokeDataReceivedEvent(Packet packet)
