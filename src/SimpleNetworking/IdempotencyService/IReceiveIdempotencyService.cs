@@ -7,5 +7,7 @@ namespace SimpleNetworking.IdempotencyService
         bool Add(T value);
         bool Remove(T value);
         bool Find(T value);
+        void PausePacketExpiry();
+        void ResumePacketExpiry();
     }
 }

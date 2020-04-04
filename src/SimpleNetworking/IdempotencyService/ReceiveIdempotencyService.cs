@@ -14,6 +14,7 @@ namespace SimpleNetworking.IdempotencyService
         private readonly SemaphoreSlim cacheRemovalSemaphore = new SemaphoreSlim(1, 1);
 
         private bool isCacheRemovalInProgress;
+        private bool isPacketExpiryPaused;
 
         private const int timerBuffer = 5 * 1000;
 
@@ -22,6 +23,7 @@ namespace SimpleNetworking.IdempotencyService
             this.expiryTime = expiryTime;
             receivedPackets = new ConcurrentDictionary<T, DateTime>();
             isCacheRemovalInProgress = false;
+            isPacketExpiryPaused = false;
             expiryTimer = new Timer(RemoveExpiredItems, null, expiryTime, expiryTime + timerBuffer);
         }
 
@@ -52,15 +54,33 @@ namespace SimpleNetworking.IdempotencyService
                 {
                     if (receivedPackets.TryGetValue(key, out DateTime addedTime) && (DateTime.Now - addedTime).TotalMilliseconds > expiryTime)
                     {
-                        receivedPackets.TryRemove(key, out _);
+                        if (isPacketExpiryPaused)
+                        {
+                            receivedPackets.TryUpdate(key, DateTime.UtcNow, addedTime);
+                        }
+                        else
+                        {
+                            receivedPackets.TryRemove(key, out _);
+                        }
                     }
                 }
+                isCacheRemovalInProgress = false;
             }
             else
             {
                 cacheRemovalSemaphore.Release();
                 return;
             }
+        }
+
+        public void PausePacketExpiry()
+        {
+            isPacketExpiryPaused = true;
+        }
+
+        public void ResumePacketExpiry()
+        {
+            isPacketExpiryPaused = false;
         }
 
         #region IDisposable Support

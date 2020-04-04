@@ -76,5 +76,43 @@ namespace SimpleNetworking.Tests.IdempotencyService
 
             receiveIdempotencyService.Dispose();
         }
+
+        [Test]
+        public void ReceiveIdempotencyServiceShouldNotRemoveItemsIfExpiryIsPaused()
+        {
+            IReceiveIdempotencyService<string> receiveIdempotencyService = new ReceiveIdempotencyService<string>(5 * 1000);
+
+            receiveIdempotencyService.Add("Hello");
+
+            receiveIdempotencyService.PausePacketExpiry();
+
+            Thread.Sleep(10 * 1000);
+
+            Assert.IsTrue(receiveIdempotencyService.Find("Hello"));
+
+            receiveIdempotencyService.Dispose();
+        }
+
+        [Test]
+        public void ReceiveIdempotencyServiceShouldRemoveItemsWhenExpiryIsResumed()
+        {
+            IReceiveIdempotencyService<string> receiveIdempotencyService = new ReceiveIdempotencyService<string>(5 * 1000);
+
+            receiveIdempotencyService.Add("Hello");
+
+            receiveIdempotencyService.PausePacketExpiry();
+
+            Thread.Sleep(10 * 1000);
+
+            Assert.IsTrue(receiveIdempotencyService.Find("Hello"));
+
+            receiveIdempotencyService.ResumePacketExpiry();
+
+            Thread.Sleep(10 * 1000);
+
+            Assert.IsFalse(receiveIdempotencyService.Find("Hello"));
+
+            receiveIdempotencyService.Dispose();
+        }
     }
 }
