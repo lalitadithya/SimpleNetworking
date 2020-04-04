@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
+using SimpleNetworking.OrderingService;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace SimpleNetworking.Tests.Client
                 this.serializer = serializer;
                 this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(10);
                 this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(30 * 60 * 1000);
+                this.orderingService = new SimplePacketOrderingService();
                 networkTransport.OnDataReceived += DataReceived;
                 if (packetResendTime.HasValue)
                 {
@@ -275,6 +277,37 @@ namespace SimpleNetworking.Tests.Client
             networkTransport.InvokeDataReceived(serializer.Serilize(data));
 
             Assert.AreEqual(1, dataReceived);
+        }
+
+        [Test]
+        public void ClientShouldNotRaiseRasieEventInOrderOfSequenceNumber()
+        {
+            NetworkTransportMock networkTransport = new NetworkTransportMock();
+            JsonSerializer serializer = new JsonSerializer();
+            ClientConcrete clientConcrete = new ClientConcrete(networkTransport, serializer, 10 * 1000);
+
+            List<MyData> dataReceived = new List<MyData>();
+            clientConcrete.OnPacketReceived += (packet) =>
+            {
+                dataReceived.Add((MyData)packet);
+            };
+
+            Packet data = ConstructPacket(new MyData
+            {
+                Name = "John Doe"
+            }, 2);
+            networkTransport.InvokeDataReceived(serializer.Serilize(data));
+            data = ConstructPacket(new MyData
+            {
+                Name = "Jane Doe"
+            }, 1);
+            networkTransport.InvokeDataReceived(serializer.Serilize(data));
+
+            Thread.Sleep(2 * 1000);
+
+            Assert.AreEqual(2, dataReceived.Count);
+            Assert.AreEqual("Jane Doe", dataReceived[0].Name);
+            Assert.AreEqual("John Doe", dataReceived[1].Name);
         }
 
 

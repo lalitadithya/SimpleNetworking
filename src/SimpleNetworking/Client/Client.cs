@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
+using SimpleNetworking.OrderingService;
 using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
@@ -27,6 +28,7 @@ namespace SimpleNetworking.Client
         protected IReceiveIdempotencyService<string> receiveIdempotencyService;
         protected ISequenceGenerator delaySequenceGenerator;
         protected CancellationToken cancellationToken;
+        protected IOrderingService orderingService;
 
         public event PacketReceivedHandler OnPacketReceived;
 
@@ -67,7 +69,7 @@ namespace SimpleNetworking.Client
         {
             Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
 
-            switch(packet.PacketHeader.PacketType)
+            switch (packet.PacketHeader.PacketType)
             {
                 case Header.PacketTypes.Ack:
                     sendIdempotencyService.Remove(Guid.Parse(packet.PacketHeader.IdempotencyToken), out _);
@@ -77,7 +79,11 @@ namespace SimpleNetworking.Client
                     {
                         receiveIdempotencyService.Add(packet.PacketHeader.IdempotencyToken);
                         SendAck(packet);
-                        InvokeDataReceivedEvent(packet);
+                        List<Packet> orderedPackets = orderingService.GetNextPacket(packet).Result;
+                        foreach (var orderedPacket in orderedPackets)
+                        {
+                            InvokeDataReceivedEvent(orderedPacket);
+                        }
                     }
                     break;
             }
@@ -129,7 +135,7 @@ namespace SimpleNetworking.Client
 
         private async void ResendPacket(object state)
         {
-            foreach(var packet in sendIdempotencyService.GetValues())
+            foreach (var packet in sendIdempotencyService.GetValues())
             {
                 await SendDataUsingTransport(packet);
             }
@@ -146,7 +152,7 @@ namespace SimpleNetworking.Client
                     SequenceNumber = packet.PacketHeader.SequenceNumber
                 }
             };
-            await SendDataUsingTransport(ackPacket); 
+            await SendDataUsingTransport(ackPacket);
         }
 
         private void InvokeDataReceivedEvent(Packet packet)
