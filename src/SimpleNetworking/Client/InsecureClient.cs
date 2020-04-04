@@ -32,6 +32,7 @@ namespace SimpleNetworking.Client
             this.serializer = serializer;
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
+            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
 
             Init(loggerFactory, maximumPacketBacklog, expiryTime);
         }
@@ -50,17 +51,25 @@ namespace SimpleNetworking.Client
         {
             this.networkTransport = networkTransport;
             networkTransport.OnDataReceived += DataReceived;
+            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
+            ClientReconnected();
+        }
+
+        private void NetworkTransport_OnConnectionLostNoReconnect()
+        {
+            ClientDisconnected();
         }
 
         protected override async Task Connect()
         {
-            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             networkTransport.OnDataReceived += DataReceived;
-            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLost;
+            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostWithReconnect;
+
+            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
         }
 
-        private void NetworkTransport_OnConnectionLost()
+        private void NetworkTransport_OnConnectionLostWithReconnect()
         {
             Task.Run(async () => await Reconnect());
         }

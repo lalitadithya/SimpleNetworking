@@ -59,7 +59,6 @@ namespace SimpleNetworking.Server
             DataReceivedHandler handshakeHandler = (data) =>
             {
                 clientId = Encoding.Unicode.GetString(data);
-                Console.WriteLine("Got id " + clientId);
                 handshakeCompleteEvent.Set();
             };
 
