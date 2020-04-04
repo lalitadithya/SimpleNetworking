@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 namespace SimpleNetworking.Networking
 {
     public delegate void DataReceivedHandler(byte[] data);
+    public delegate void ConnectionLostHandler();
     public abstract class NetworkTransport
     {
         protected Stream stream;
@@ -18,11 +19,27 @@ namespace SimpleNetworking.Networking
         private enum PacketTypes { KeepAlive = 0, DataPacket = 1 }
 
         public event DataReceivedHandler OnDataReceived;
+        public event ConnectionLostHandler OnConnectionLost;
 
         public virtual async Task SendData(byte[] data)
         {
-            byte[] payload = ConstructPayload(data);
-            await stream.WriteAsync(payload);
+            if (stream.CanWrite)
+            {
+                byte[] payload = ConstructPayload(data);
+                try
+                {
+                    await stream.WriteAsync(payload);
+                }
+                catch (Exception e)
+                {
+                    logger?.LogError(e, "Sending data failed");
+                    DropConnection();
+                }
+            }
+            else
+            {
+                logger?.LogWarning("Sream is not in a writeable state");
+            }
         }
 
         private static byte[] ConstructPayload(byte[] data)
@@ -39,9 +56,18 @@ namespace SimpleNetworking.Networking
         {
             Task.Run(async () =>
             {
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested && stream.CanRead)
                 {
-                    await ListenLoop();
+                    try
+                    {
+                        await ListenLoop();
+                    }
+                    catch (Exception e)
+                    {
+                        logger?.LogError(e, "Listen loop failed");
+                        DropConnection();
+                        break;
+                    }
                 }
             });
         }
@@ -82,6 +108,20 @@ namespace SimpleNetworking.Networking
             return data;
         }
 
+        private void DropConnection()
+        {
+            try
+            {
+                stream.Close();
+                stream.Dispose();
+                OnConnectionLost?.Invoke();
+            }
+            catch (Exception e)
+            {
+                logger?.LogWarning(e, "Drop connection");
+            }
+        }
+
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
@@ -91,7 +131,7 @@ namespace SimpleNetworking.Networking
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
+                    DropConnection();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
