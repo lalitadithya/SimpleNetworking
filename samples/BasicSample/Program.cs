@@ -20,7 +20,6 @@ namespace BasicSample
     class Program
     {
         static IInsecureClient client;
-        static string type;
 
         static void Main(string[] args)
         {
@@ -32,20 +31,21 @@ namespace BasicSample
             Console.WriteLine("1 -> Client");
             Console.WriteLine("2 -> Server");
             int choice = int.Parse(Console.ReadLine());
-            switch(choice)
+            switch (choice)
             {
                 case 1:
-                    type = "client";
-                    client = new InsecureClient(cts.Token, factory);
+                    client = new InsecureClient(new JsonSerializer(), cts.Token, factory);
                     client.OnPacketReceived += Client_OnPacketReceived;
-                    client.Connect("localhost", 9000, new JsonSerializer());
+                    string ip = Console.ReadLine();
+                    client.Connect(ip, 9000);
                     Console.WriteLine("Connect success");
+                    Task.Run(() => SendNumbers());
                     break;
                 case 2:
-                    type = "sever";
                     InsecureServer server = new InsecureServer();
                     server.OnClientConnected += Server_OnClientConnected;
                     server.StartListening(IPAddress.Any, 9000, new JsonSerializer(), cts.Token);
+                    Console.WriteLine("Server started");
                     break;
             }
 
@@ -54,17 +54,23 @@ namespace BasicSample
             Console.ReadKey();
         }
 
-        private static void Client_OnPacketReceived(object data)
+        private static void SendNumbers()
         {
-            Task.Run(() =>
+            int i = 0;
+            while (true)
             {
-                MyPacket packet = (MyPacket)data;
-                Console.WriteLine("Got: " + packet.Data);
                 client.SendData(new MyPacket
                 {
-                    Data = packet.Data.Contains("Ping") ? $"{type}: Pong" : $"{type}: Ping"
+                    Data = $"{i++}"
                 });
-            });
+                Thread.Sleep(2 * 1000);
+            }
+        }
+
+        private static void Client_OnPacketReceived(object data)
+        {
+            MyPacket packet = (MyPacket)data;
+            Console.WriteLine("Got: " + packet.Data);
         }
 
         private static void Server_OnClientConnected(IInsecureClient client1)
@@ -74,10 +80,7 @@ namespace BasicSample
             Task.Run(() =>
             {
                 client.OnPacketReceived += Client_OnPacketReceived;
-                client.SendData(new MyPacket
-                {
-                    Data = $"{type}: Ping"
-                });
+                SendNumbers();
             });
         }
     }

@@ -19,22 +19,21 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
-        public InsecureClient(ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000, IOrderingService orderingService = null)
+        public InsecureClient(ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000, IOrderingService orderingService = null, int millisecondsIntervalForPacketResend = 60 * 1000)
         {
-            this.cancellationToken = cancellationToken;
             delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
-            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService);
             id = Guid.NewGuid().ToString();
+
+            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService, cancellationToken, millisecondsIntervalForPacketResend);
         }
 
-        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, IOrderingService orderingService = null)
+        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, IOrderingService orderingService = null, int millisecondsIntervalForPacketResend = 60 * 1000)
         {
-            this.cancellationToken = cancellationToken;
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
 
-            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService);
+            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService, cancellationToken, millisecondsIntervalForPacketResend);
         }
 
         public async void Connect(string hostName, int port)
@@ -66,6 +65,7 @@ namespace SimpleNetworking.Client
 
             ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+            StartPacketResend();
         }
 
         private void NetworkTransport_OnConnectionLostWithReconnect()
@@ -73,7 +73,7 @@ namespace SimpleNetworking.Client
             Task.Run(async () => await Reconnect());
         }
 
-        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime, ISerializer serializer, IOrderingService orderingService)
+        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime, ISerializer serializer, IOrderingService orderingService, CancellationToken cancellationToken, int millisecondsIntervalForPacketResend = 60 * 1000)
         {
             if (loggerFactory != null)
             {
@@ -81,6 +81,8 @@ namespace SimpleNetworking.Client
             }
             this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
             this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
+            this.cancellationToken = cancellationToken;
+            this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
             this.serializer = serializer;
             if (orderingService == null)
             {

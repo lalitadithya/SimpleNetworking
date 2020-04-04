@@ -19,7 +19,6 @@ namespace SimpleNetworking.Client
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
         private Timer packetResendTimer;
-        private int millisecondsIntervalForPacketResend;
 
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
@@ -29,6 +28,7 @@ namespace SimpleNetworking.Client
         protected ISequenceGenerator delaySequenceGenerator;
         protected CancellationToken cancellationToken;
         protected IOrderingService orderingService;
+        protected int millisecondsIntervalForPacketResend;
 
         public event PacketReceivedHandler OnPacketReceived;
 
@@ -119,18 +119,17 @@ namespace SimpleNetworking.Client
         protected void ClientReconnected()
         {
             receiveIdempotencyService.ResumePacketExpiry();
-            StartPacketResend(millisecondsIntervalForPacketResend);
+            StartPacketResend();
         }
 
-        protected void StartPacketResend(int millisecondsInterval)
+        protected void StartPacketResend()
         {
-            millisecondsIntervalForPacketResend = millisecondsInterval;
-            packetResendTimer = new Timer(ResendPacket, null, millisecondsInterval, millisecondsInterval);
+            packetResendTimer = new Timer(ResendPacket, null, millisecondsIntervalForPacketResend, millisecondsIntervalForPacketResend);
         }
 
         protected void StopPacketResend()
         {
-            packetResendTimer.Dispose();
+            packetResendTimer?.Dispose();
         }
 
         private async void ResendPacket(object state)
