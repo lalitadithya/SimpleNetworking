@@ -73,15 +73,21 @@ namespace BasicSample
             Console.WriteLine("Got: " + packet.Data);
         }
 
+        private static void Client_OnPacketReceived1(object data)
+        {
+            MyPacket packet = (MyPacket)data;
+            Console.WriteLine("Got: " + packet.Data);
+            client.SendData(new MyPacket
+            {
+                Data = $"{packet.Data}"
+            });
+        }
+
         private static void Server_OnClientConnected(IInsecureClient client1)
         {
             Console.WriteLine("Client connected");
             client = client1;
-            Task.Run(() =>
-            {
-                client.OnPacketReceived += Client_OnPacketReceived;
-                SendNumbers();
-            });
+            client.OnPacketReceived += Client_OnPacketReceived1;
         }
     }
 }

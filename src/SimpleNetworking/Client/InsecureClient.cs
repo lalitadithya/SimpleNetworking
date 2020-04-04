@@ -40,9 +40,9 @@ namespace SimpleNetworking.Client
         {
             this.hostName = hostName;
             this.port = port;
-            networkTransport = new TcpNetworkTransport(cancellationToken);
 
             await Connect();
+            StartPacketResend(false);
         }
 
         public void ClientReconnected(TcpNetworkTransport networkTransport)
@@ -60,12 +60,12 @@ namespace SimpleNetworking.Client
 
         protected override async Task Connect()
         {
+            networkTransport = new TcpNetworkTransport(cancellationToken);
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostWithReconnect;
 
             ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
-            StartPacketResend();
         }
 
         private void NetworkTransport_OnConnectionLostWithReconnect()

@@ -12,6 +12,9 @@ namespace SimpleNetworking.Networking
     public delegate void ConnectionLostHandler();
     public abstract class NetworkTransport
     {
+        protected bool connectionDroppedEventRaised = false;
+        private SemaphoreSlim dropConnectionSemaphore = new SemaphoreSlim(1, 1);
+
         protected Stream stream;
         protected CancellationToken cancellationToken;
         protected ILogger logger;
@@ -110,15 +113,24 @@ namespace SimpleNetworking.Networking
 
         protected void DropConnection()
         {
-            try
+            dropConnectionSemaphore.Wait();
+            if (!connectionDroppedEventRaised)
             {
-                stream?.Close();
-                stream?.Dispose();
-                OnConnectionLost?.Invoke();
-            }
-            catch (Exception e)
-            {
-                logger?.LogWarning(e, "Drop connection");
+                try
+                {
+                    stream?.Close();
+                    stream?.Dispose();
+                    OnConnectionLost?.Invoke();
+                    connectionDroppedEventRaised = true;
+                }
+                catch (Exception e)
+                {
+                    logger?.LogWarning(e, "Drop connection");
+                }
+                finally
+                {
+                    dropConnectionSemaphore.Release();
+                }
             }
         }
 

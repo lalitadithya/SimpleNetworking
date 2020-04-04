@@ -30,7 +30,8 @@ namespace SimpleNetworking.Tests.Client
                 networkTransport.OnDataReceived += DataReceived;
                 if (packetResendTime.HasValue)
                 {
-                    StartPacketResend(packetResendTime.Value);
+                    millisecondsIntervalForPacketResend = packetResendTime.Value;
+                    StartPacketResend(false);
                 }
             }
 

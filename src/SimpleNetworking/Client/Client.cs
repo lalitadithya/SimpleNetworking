@@ -105,7 +105,7 @@ namespace SimpleNetworking.Client
                 {
                     logger?.LogWarning(e, "Reconnection failed");
                     delayEnumerator.MoveNext();
-                    await Task.Delay(delayEnumerator.Current);
+                    await Task.Delay(delayEnumerator.Current * 1000);
                 }
             }
         }
@@ -119,12 +119,19 @@ namespace SimpleNetworking.Client
         protected void ClientReconnected()
         {
             receiveIdempotencyService.ResumePacketExpiry();
-            StartPacketResend();
+            StartPacketResend(true);
         }
 
-        protected void StartPacketResend()
+        protected void StartPacketResend(bool isReconnect)
         {
-            packetResendTimer = new Timer(ResendPacket, null, millisecondsIntervalForPacketResend, millisecondsIntervalForPacketResend);
+            if (isReconnect)
+            {
+                packetResendTimer = new Timer(ResendPacket, null, millisecondsIntervalForPacketResend, millisecondsIntervalForPacketResend);
+            }
+            else
+            {
+                packetResendTimer = new Timer(ResendPacket, null, 0, millisecondsIntervalForPacketResend);
+            }
         }
 
         protected void StopPacketResend()
