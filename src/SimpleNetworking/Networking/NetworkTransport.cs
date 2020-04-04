@@ -111,7 +111,7 @@ namespace SimpleNetworking.Networking
             return data;
         }
 
-        protected void DropConnection()
+        public void DropConnection()
         {
             dropConnectionSemaphore.Wait();
             if (!connectionDroppedEventRaised)

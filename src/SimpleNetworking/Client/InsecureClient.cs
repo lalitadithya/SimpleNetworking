@@ -19,6 +19,9 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
+        public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
+        public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
+
         public InsecureClient(ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000, IOrderingService orderingService = null, int millisecondsIntervalForPacketResend = 60 * 1000)
         {
             delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
@@ -47,9 +50,13 @@ namespace SimpleNetworking.Client
 
         public void ClientReconnected(TcpNetworkTransport networkTransport)
         {
+            this.networkTransport.OnDataReceived -= DataReceived;
+            this.networkTransport.OnConnectionLost -= NetworkTransport_OnConnectionLostNoReconnect;
+            this.networkTransport.DropConnection();
+
             this.networkTransport = networkTransport;
-            networkTransport.OnDataReceived += DataReceived;
-            networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
+            this.networkTransport.OnDataReceived += DataReceived;
+            this.networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
             ClientReconnected();
         }
 
@@ -91,6 +98,30 @@ namespace SimpleNetworking.Client
             else
             {
                 this.orderingService = orderingService;
+            }
+        }
+
+        protected override void RaisePeerDeviceReconnected()
+        {
+            try
+            {
+                OnPeerDeviceReconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
+            }
+        }
+
+        protected override void RaisePeerDeviceDisconnected()
+        {
+            try
+            {
+                OnPeerDeviceDisconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
             }
         }
     }

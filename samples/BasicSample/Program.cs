@@ -36,6 +36,8 @@ namespace BasicSample
                 case 1:
                     client = new InsecureClient(new JsonSerializer(), cts.Token, factory);
                     client.OnPacketReceived += Client_OnPacketReceived;
+                    client.OnPeerDeviceDisconnected += Client_OnPeerDeviceDisconnected;
+                    client.OnPeerDeviceReconnected += Client_OnPeerDeviceReconnected;
                     string ip = Console.ReadLine();
                     client.Connect(ip, 9000);
                     Console.WriteLine("Connect success");
@@ -52,6 +54,16 @@ namespace BasicSample
             Console.ReadKey();
             cts.Cancel();
             Console.ReadKey();
+        }
+
+        private static void Client_OnPeerDeviceReconnected()
+        {
+            Console.WriteLine("Peer device reconnected");
+        }
+
+        private static void Client_OnPeerDeviceDisconnected()
+        {
+            Console.WriteLine("Peer device disconnected");
         }
 
         private static void SendNumbers()
@@ -88,6 +100,8 @@ namespace BasicSample
             Console.WriteLine("Client connected");
             client = client1;
             client.OnPacketReceived += Client_OnPacketReceived1;
+            client.OnPeerDeviceDisconnected += Client_OnPeerDeviceDisconnected;
+            client.OnPeerDeviceReconnected += Client_OnPeerDeviceReconnected;
         }
     }
 }

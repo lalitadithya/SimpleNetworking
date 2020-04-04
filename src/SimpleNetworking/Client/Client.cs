@@ -31,8 +31,12 @@ namespace SimpleNetworking.Client
         protected int millisecondsIntervalForPacketResend;
 
         public event PacketReceivedHandler OnPacketReceived;
+        public abstract event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
+        public abstract event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
 
         protected abstract Task Connect();
+        protected abstract void RaisePeerDeviceReconnected();
+        protected abstract void RaisePeerDeviceDisconnected();
 
         public async Task SendData(object payload)
         {
@@ -114,23 +118,25 @@ namespace SimpleNetworking.Client
         {
             receiveIdempotencyService.PausePacketExpiry();
             StopPacketResend();
+            RaisePeerDeviceDisconnected();
         }
 
         protected void ClientReconnected()
         {
             receiveIdempotencyService.ResumePacketExpiry();
             StartPacketResend(true);
+            RaisePeerDeviceReconnected();
         }
 
         protected void StartPacketResend(bool isReconnect)
         {
             if (isReconnect)
             {
-                packetResendTimer = new Timer(ResendPacket, null, millisecondsIntervalForPacketResend, millisecondsIntervalForPacketResend);
+                packetResendTimer = new Timer(ResendPacket, null, 0, millisecondsIntervalForPacketResend);
             }
             else
             {
-                packetResendTimer = new Timer(ResendPacket, null, 0, millisecondsIntervalForPacketResend);
+                packetResendTimer = new Timer(ResendPacket, null, millisecondsIntervalForPacketResend, millisecondsIntervalForPacketResend);
             }
         }
 

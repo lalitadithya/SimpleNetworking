@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using SimpleNetworking.Client;
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
@@ -35,12 +36,25 @@ namespace SimpleNetworking.Tests.Client
                 }
             }
 
+            public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
+            public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
+
             public new void StopPacketResend()
             {
                 base.StopPacketResend();
             }
 
             protected override Task Connect()
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void RaisePeerDeviceDisconnected()
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void RaisePeerDeviceReconnected()
             {
                 throw new NotImplementedException();
             }

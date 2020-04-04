@@ -10,12 +10,25 @@ namespace SimpleNetworking.Client
     {
         private ITlsNetworkTransport networkTransport;
 
+        public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
+        public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
+
         public void Connect(string hostname, long port, string pfxFilePath, string pfxFilePassword)
         {
             throw new NotImplementedException();
         }
 
         protected override Task Connect()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void RaisePeerDeviceDisconnected()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void RaisePeerDeviceReconnected()
         {
             throw new NotImplementedException();
         }
