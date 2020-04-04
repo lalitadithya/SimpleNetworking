@@ -21,7 +21,8 @@ namespace SimpleNetworking.Client
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
         protected ILogger logger;
-        protected ISendIdempotencyService<Guid, Packet> idempotencyService; 
+        protected ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
+        protected IReceiveIdempotencyService<string> receiveIdempotencyService;
 
         public event PacketReceivedHandler OnPacketReceived;
 
@@ -42,7 +43,7 @@ namespace SimpleNetworking.Client
                     },
                     PacketPayload = payload
                 };
-                await idempotencyService.Add(idempotencyToken, packet);
+                await sendIdempotencyService.Add(idempotencyToken, packet);
                 await SendDataUsingTransport(packet);
             }
             finally
@@ -63,11 +64,15 @@ namespace SimpleNetworking.Client
             switch(packet.PacketHeader.PacketType)
             {
                 case Header.PacketTypes.Ack:
-                    idempotencyService.Remove(Guid.Parse(packet.PacketHeader.IdempotencyToken), out _);
+                    sendIdempotencyService.Remove(Guid.Parse(packet.PacketHeader.IdempotencyToken), out _);
                     break;
                 case Header.PacketTypes.Data:
-                    SendAck(packet);
-                    InvokeDataReceivedEvent(packet);
+                    if (!receiveIdempotencyService.Find(packet.PacketHeader.IdempotencyToken))
+                    {
+                        receiveIdempotencyService.Add(packet.PacketHeader.IdempotencyToken);
+                        SendAck(packet);
+                        InvokeDataReceivedEvent(packet);
+                    }
                     break;
             }
         }
@@ -84,7 +89,7 @@ namespace SimpleNetworking.Client
 
         private async void ResendPacket(object state)
         {
-            foreach(var packet in idempotencyService.GetValues())
+            foreach(var packet in sendIdempotencyService.GetValues())
             {
                 await SendDataUsingTransport(packet);
             }

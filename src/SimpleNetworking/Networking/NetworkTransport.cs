@@ -67,7 +67,7 @@ namespace SimpleNetworking.Networking
             }
             catch (Exception e)
             {
-                logger.LogError(e, "OnDataReceived threw an exception");
+                logger?.LogError(e, "OnDataReceived threw an exception");
             }
         }
 

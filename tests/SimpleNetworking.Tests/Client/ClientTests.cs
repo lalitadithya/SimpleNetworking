@@ -23,7 +23,8 @@ namespace SimpleNetworking.Tests.Client
             {
                 this.networkTransport = networkTransport;
                 this.serializer = serializer;
-                this.idempotencyService = new SendIdempotencyService<Guid, Packet>(10);
+                this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(10);
+                this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(30 * 60 * 1000);
                 networkTransport.OnDataReceived += DataReceived;
                 if (packetResendTime.HasValue)
                 {
@@ -244,6 +245,31 @@ namespace SimpleNetworking.Tests.Client
             Assert.AreEqual(sentPacket.PacketHeader.ClassType, sentPacket1.PacketHeader.ClassType);
             Assert.AreEqual(((MyData)(sentPacket.PacketPayload as JObject).ToObject(typeof(MyData))).Name,
                 ((MyData)(sentPacket1.PacketPayload as JObject).ToObject(typeof(MyData))).Name);
+        }
+
+        [Test]
+        public void ClientShouldNotRaiseMultipleEventsForDuplicatePacket()
+        {
+            NetworkTransportMock networkTransport = new NetworkTransportMock();
+            JsonSerializer serializer = new JsonSerializer();
+            ClientConcrete clientConcrete = new ClientConcrete(networkTransport, serializer, 10 * 1000);
+            MyData myData = new MyData
+            {
+                Name = "John Doe"
+            };
+
+            int dataReceived = 0;
+            clientConcrete.OnPacketReceived += (packet) =>
+            {
+                dataReceived++;
+            };
+
+            Packet data = ConstructPacket(myData, 1);
+            networkTransport.InvokeDataReceived(serializer.Serilize(data));
+            Thread.Sleep(2 * 1000);
+            networkTransport.InvokeDataReceived(serializer.Serilize(data));
+
+            Assert.AreEqual(1, dataReceived);
         }
 
 

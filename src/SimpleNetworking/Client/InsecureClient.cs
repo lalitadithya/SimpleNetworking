@@ -11,20 +11,19 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client, IInsecureClient
     {
-        public InsecureClient(ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000)
+        public InsecureClient(ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
         {
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<InsecureClient>();
-            }
-            this.idempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
+            Init(loggerFactory, maximumPacketBacklog, expiryTime);
         }
 
-        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer)
+
+        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000)
         {
             this.serializer = serializer;
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
+
+            Init(loggerFactory, maximumPacketBacklog, expiryTime);
         }
 
         public void Connect(string hostName, int port, ISerializer serializer)
@@ -33,6 +32,15 @@ namespace SimpleNetworking.Client
             networkTransport = new TcpNetworkTransport();
             ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             networkTransport.OnDataReceived += DataReceived;
+        }
+        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime)
+        {
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<InsecureClient>();
+            }
+            this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
+            this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
         }
     }
 }
