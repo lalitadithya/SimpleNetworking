@@ -87,7 +87,9 @@ namespace SimpleNetworking.Client
                     if (!receiveIdempotencyService.Find(packet.PacketHeader.IdempotencyToken))
                     {
                         receiveIdempotencyService.Add(packet.PacketHeader.IdempotencyToken);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                         SendAck(packet);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                         List<Packet> orderedPackets = orderingService.GetNextPacket(packet).Result;
                         foreach (var orderedPacket in orderedPackets)
                         {
