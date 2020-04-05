@@ -19,6 +19,8 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
+        private ILoggerFactory loggerFactory;
+
         public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
         public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
 
@@ -76,7 +78,7 @@ namespace SimpleNetworking.Client
 
         protected override async Task Connect()
         {
-            networkTransport = new TcpNetworkTransport(cancellationToken);
+            networkTransport = new TcpNetworkTransport(cancellationToken, loggerFactory);
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostWithReconnect;
 
@@ -94,10 +96,7 @@ namespace SimpleNetworking.Client
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator, 
             int millisecondsIntervalForPacketResend)
         {
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<InsecureClient>();
-            }
+            this.loggerFactory = loggerFactory;
             this.sendIdempotencyService = sendIdempotencyService;
             this.receiveIdempotencyService = receiveIdempotencyService;
             this.cancellationToken = cancellationToken;
@@ -105,6 +104,13 @@ namespace SimpleNetworking.Client
             this.serializer = serializer;
             this.orderingService = orderingService;
             this.delaySequenceGenerator = delaySequenceGenerator;
+
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<InsecureClient>();
+            }
+
+            this.cancellationToken.Register(() => Cancel());
         }
 
         protected override void RaisePeerDeviceReconnected()

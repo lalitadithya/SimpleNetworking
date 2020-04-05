@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using SimpleNetworking.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,17 +32,21 @@ namespace SimpleNetworking.Networking
                 byte[] payload = ConstructPayload(data);
                 try
                 {
-                    await stream.WriteAsync(payload);
+                    await stream.WriteAsync(payload, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    DropConnection();
                 }
                 catch (Exception e)
                 {
-                    logger?.LogError(e, "Sending data failed");
+                    logger?.LogError("SendData failed - {0}", e.Message);
                     DropConnection();
                 }
             }
             else
             {
-                logger?.LogWarning("Sream is not in a writeable state");
+                logger?.LogWarning("Stream is not in a writeable state");
             }
         }
 
@@ -65,9 +70,14 @@ namespace SimpleNetworking.Networking
                     {
                         await ListenLoop();
                     }
+                    catch(OperationCanceledException)
+                    {
+                        DropConnection();
+                        break;
+                    }
                     catch (Exception e)
                     {
-                        logger?.LogError(e, "Listen loop failed");
+                        logger?.LogError("ListenLoop failed - {0}", e.Message);
                         DropConnection();
                         break;
                     }
@@ -106,8 +116,14 @@ namespace SimpleNetworking.Networking
             int offset = 0;
             do
             {
-                offset += await stream.ReadAsync(data, offset, length - offset, cancellationToken);
-            } while (offset < length && !cancellationToken.IsCancellationRequested);
+                int readResult = await stream.ReadAsync(data, offset, length - offset, cancellationToken);
+                if(readResult <= 0)
+                {
+                    throw new EndOfStreamReachedException();
+                }
+
+                offset += readResult;
+            } while (offset < length && !cancellationToken.IsCancellationRequested && stream.CanRead);
             return data;
         }
 
@@ -133,41 +149,5 @@ namespace SimpleNetworking.Networking
                 }
             }
         }
-
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    DropConnection();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~NetworkTransport()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SimpleNetworking.OrderingService
 {
-    public interface IOrderingService
+    public interface IOrderingService : IDisposable
     {
         Task<List<Packet>> GetNextPacket(Packet packet);
     }

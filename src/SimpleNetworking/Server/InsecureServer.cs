@@ -19,6 +19,8 @@ namespace SimpleNetworking.Server
 {
     public class InsecureServer : IInsecureServer
     {
+        private const int handshakeTimeout = 30 * 1000;
+
         private TcpListener tcpListener;
 
         private int millisecondsIntervalForPacketResend;
@@ -31,6 +33,7 @@ namespace SimpleNetworking.Server
         private ISequenceGenerator delaySequenceGenerator;
 
         private readonly ConcurrentDictionary<string, InsecureClient> clients;
+        private ILogger logger;
 
         public event ClientConnectedHandler OnClientConnected;
 
@@ -47,6 +50,11 @@ namespace SimpleNetworking.Server
             this.receiveIdempotencyService = receiveIdempotencyService;
             this.delaySequenceGenerator = delaySequenceGenerator;
             this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
+
+            if(this.loggerFactory != null)
+            {
+                logger = this.loggerFactory.CreateLogger<InsecureServer>();
+            }
 
             clients = new ConcurrentDictionary<string, InsecureClient>();
         }
@@ -77,7 +85,9 @@ namespace SimpleNetworking.Server
 
         private void ProcessClient(TcpClient client)
         {
-            TcpNetworkTransport tcpNetworkTransport = new TcpNetworkTransport(cancellationToken, client);
+            logger.LogInformation("{0} connected", client.Client.RemoteEndPoint);
+
+            TcpNetworkTransport tcpNetworkTransport = new TcpNetworkTransport(cancellationToken, client, loggerFactory);
             AutoResetEvent handshakeCompleteEvent = new AutoResetEvent(false);
 
             string clientId = "";
@@ -89,15 +99,17 @@ namespace SimpleNetworking.Server
 
             tcpNetworkTransport.OnDataReceived += handshakeHandler;
 
-            if (handshakeCompleteEvent.WaitOne(30 * 1000))
+            if (handshakeCompleteEvent.WaitOne(handshakeTimeout))
             {
                 tcpNetworkTransport.OnDataReceived -= handshakeHandler;
                 if (clients.ContainsKey(clientId))
                 {
+                    logger?.LogInformation("{0} is reconnected", client.Client.RemoteEndPoint);
                     clients[clientId].ClientReconnected(tcpNetworkTransport);
                 }
                 else
                 {
+                    logger?.LogInformation("{0} is a new client", client.Client.RemoteEndPoint);
                     InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, loggerFactory, serializer, orderingService, 
                         cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
                     clients.TryAdd(clientId, insecureClient);
@@ -106,8 +118,10 @@ namespace SimpleNetworking.Server
             }
             else
             {
+                logger.LogWarning("{0} handshake failed", client.Client.RemoteEndPoint);
+
                 tcpNetworkTransport.OnDataReceived -= handshakeHandler;
-                tcpNetworkTransport.Dispose();
+                tcpNetworkTransport.DropConnection();
                 client.Close();
                 client.Dispose();
             }

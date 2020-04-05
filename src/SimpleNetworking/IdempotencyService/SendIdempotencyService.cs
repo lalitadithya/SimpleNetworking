@@ -61,5 +61,29 @@ namespace SimpleNetworking.IdempotencyService
                 }
             }
         }
+
+        #region IDisposable Support
+        private bool isDisposed = false; 
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                if (disposing)
+                {
+                    packets.Clear();
+                    maximumPacketLimitExceededEvent.Dispose();
+                    addSemaphoreSlim.Dispose();
+                }
+
+                isDisposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }

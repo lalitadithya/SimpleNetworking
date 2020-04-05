@@ -40,6 +40,11 @@ namespace SimpleNetworking.Client
 
         public async Task SendData(object payload)
         {
+            if(cancellationToken.IsCancellationRequested)
+            {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+
             await sendSemaphore.WaitAsync();
             try
             {
@@ -107,18 +112,23 @@ namespace SimpleNetworking.Client
                 }
                 catch (Exception e)
                 {
-                    logger?.LogWarning(e, "Reconnection failed");
+                    logger?.LogWarning("Reconnection failed - {0}", e.Message);
                     delayEnumerator.MoveNext();
-                    await Task.Delay(delayEnumerator.Current * 1000);
+                    int millisecondsDelay = delayEnumerator.Current * 1000;
+                    logger?.LogInformation("Will reconnect in {0} milliseconds", millisecondsDelay);
+                    await Task.Delay(millisecondsDelay);
                 }
             }
         }
 
         protected void ClientDisconnected()
         {
-            receiveIdempotencyService.PausePacketExpiry();
-            StopPacketResend();
-            RaisePeerDeviceDisconnected();
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                receiveIdempotencyService.PausePacketExpiry();
+                StopPacketResend();
+                RaisePeerDeviceDisconnected();
+            }
         }
 
         protected void ClientReconnected()
@@ -177,6 +187,16 @@ namespace SimpleNetworking.Client
             {
                 logger?.LogError(exception, "OnPacketReceived threw an exception");
             }
+        }
+
+        protected void Cancel()
+        {
+            networkTransport?.DropConnection();
+            sendIdempotencyService?.Dispose();
+            receiveIdempotencyService?.Dispose();
+            orderingService?.Dispose();
+            sendSemaphore?.Dispose();
+            packetResendTimer?.Dispose();
         }
     }
 }

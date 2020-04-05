@@ -9,33 +9,38 @@ namespace SimpleNetworking.Networking
 {
     public class TcpNetworkTransport : NetworkTransport, ITcpNetworkTransport
     {
+        private ILoggerFactory loggerFactory;
+
         private TcpClient tcpClient; 
 
-        public TcpNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory = null)
+        public TcpNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory)
         {
             this.cancellationToken = cancellationToken;
+            this.loggerFactory = loggerFactory;
+
             cancellationToken.Register(() => Stop());
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
-            }
         }
 
-        internal TcpNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient)
+        internal TcpNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient, ILoggerFactory loggerFactory)
         {
             this.cancellationToken = cancellationToken;
             this.tcpClient = tcpClient;
-            Initialize();
+            Initialize(loggerFactory);
         }
 
         public void Connect(string hostName, int port)
         {
             tcpClient = new TcpClient(hostName, port);
-            Initialize();
+            Initialize(loggerFactory);
         }
 
-        private void Initialize()
+        private void Initialize(ILoggerFactory loggerFactory)
         {
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
+            }
+
             stream = tcpClient.GetStream();
             StartReading();
         }
