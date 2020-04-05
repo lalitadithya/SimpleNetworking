@@ -34,7 +34,8 @@ namespace BasicSample
             switch (choice)
             {
                 case 1:
-                    client = new InsecureClient(new JsonSerializer(), cts.Token, factory);
+                    client = SimpleNetworking.Builder.Builder.InsecureClient.Build();
+
                     client.OnPacketReceived += Client_OnPacketReceived;
                     client.OnPeerDeviceDisconnected += Client_OnPeerDeviceDisconnected;
                     client.OnPeerDeviceReconnected += Client_OnPeerDeviceReconnected;
@@ -44,7 +45,8 @@ namespace BasicSample
                     Task.Run(() => SendNumbers());
                     break;
                 case 2:
-                    InsecureServer server = new InsecureServer();
+                    InsecureServer server = SimpleNetworking.Builder.Builder.InsecureServer.Build();
+
                     server.OnClientConnected += Server_OnClientConnected;
                     server.StartListening(IPAddress.Any, 9000, new JsonSerializer(), cts.Token);
                     Console.WriteLine("Server started");

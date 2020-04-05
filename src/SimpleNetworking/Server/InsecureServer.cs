@@ -1,5 +1,10 @@
-﻿using SimpleNetworking.Client;
+﻿using Microsoft.Extensions.Logging;
+using SimpleNetworking.Client;
+using SimpleNetworking.IdempotencyService;
+using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
+using SimpleNetworking.OrderingService;
+using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Concurrent;
@@ -15,14 +20,34 @@ namespace SimpleNetworking.Server
     public class InsecureServer : IInsecureServer
     {
         private TcpListener tcpListener;
-        private CancellationToken cancellationToken;
+
+        private int millisecondsIntervalForPacketResend;
+        private ILoggerFactory loggerFactory;
         private ISerializer serializer;
+        private CancellationToken cancellationToken;
+        private IOrderingService orderingService;
+        private ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
+        private IReceiveIdempotencyService<string> receiveIdempotencyService;
+        private ISequenceGenerator delaySequenceGenerator;
+
         private readonly ConcurrentDictionary<string, InsecureClient> clients;
 
         public event ClientConnectedHandler OnClientConnected;
 
-        public InsecureServer()
+        public InsecureServer(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
+            int millisecondsIntervalForPacketResend)
         {
+            this.loggerFactory = loggerFactory;
+            this.serializer = serializer;
+            this.orderingService = orderingService;
+            this.cancellationToken = cancellationToken;
+            this.sendIdempotencyService = sendIdempotencyService;
+            this.receiveIdempotencyService = receiveIdempotencyService;
+            this.delaySequenceGenerator = delaySequenceGenerator;
+            this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
+
             clients = new ConcurrentDictionary<string, InsecureClient>();
         }
 
@@ -73,7 +98,8 @@ namespace SimpleNetworking.Server
                 }
                 else
                 {
-                    InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, serializer, cancellationToken);
+                    InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, loggerFactory, serializer, orderingService, 
+                        cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
                     clients.TryAdd(clientId, insecureClient);
                     OnClientConnected?.Invoke(insecureClient);
                 }

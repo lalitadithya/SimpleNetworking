@@ -22,21 +22,30 @@ namespace SimpleNetworking.Client
         public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
         public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
 
-        public InsecureClient(ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, int maximumBackoffTime = 60 * 1000, IOrderingService orderingService = null, int millisecondsIntervalForPacketResend = 60 * 1000)
+        public InsecureClient(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
+            int millisecondsIntervalForPacketResend)
         {
-            delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
             id = Guid.NewGuid().ToString();
 
-            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService, cancellationToken, millisecondsIntervalForPacketResend);
+            Init(loggerFactory, serializer, orderingService, cancellationToken, 
+                sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, 
+                millisecondsIntervalForPacketResend);
         }
 
-        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ISerializer serializer, CancellationToken cancellationToken, ILoggerFactory loggerFactory = null, int maximumPacketBacklog = 1000, int expiryTime = 600000, IOrderingService orderingService = null, int millisecondsIntervalForPacketResend = 60 * 1000)
+        internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
+            int millisecondsIntervalForPacketResend)
         {
             this.networkTransport = tcpNetworkTransport;
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostNoReconnect;
 
-            Init(loggerFactory, maximumPacketBacklog, expiryTime, serializer, orderingService, cancellationToken, millisecondsIntervalForPacketResend);
+            Init(loggerFactory, serializer, orderingService, cancellationToken,
+                sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
+                millisecondsIntervalForPacketResend);
         }
 
         public async void Connect(string hostName, int port)
@@ -80,25 +89,22 @@ namespace SimpleNetworking.Client
             Task.Run(async () => await Reconnect());
         }
 
-        private void Init(ILoggerFactory loggerFactory, int maximumPacketBacklog, int expiryTime, ISerializer serializer, IOrderingService orderingService, CancellationToken cancellationToken, int millisecondsIntervalForPacketResend = 60 * 1000)
+        private void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService, 
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService, 
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator, 
+            int millisecondsIntervalForPacketResend)
         {
             if (loggerFactory != null)
             {
                 logger = loggerFactory.CreateLogger<InsecureClient>();
             }
-            this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
-            this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
+            this.sendIdempotencyService = sendIdempotencyService;
+            this.receiveIdempotencyService = receiveIdempotencyService;
             this.cancellationToken = cancellationToken;
             this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
             this.serializer = serializer;
-            if (orderingService == null)
-            {
-                this.orderingService = new SimplePacketOrderingService();
-            }
-            else
-            {
-                this.orderingService = orderingService;
-            }
+            this.orderingService = orderingService;
+            this.delaySequenceGenerator = delaySequenceGenerator;
         }
 
         protected override void RaisePeerDeviceReconnected()
