@@ -54,12 +54,12 @@ namespace SimpleNetworking.Server
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     TcpClient client = await tcpListener.AcceptTcpClientAsync();
-                    ProcessClient(client);
+                    await ProcessClient(client);
                 }
             });
         }
 
-        private void ProcessClient(TcpClient client)
+        private async Task ProcessClient(TcpClient client)
         {
             logger.LogInformation("{0} connected", client.Client.RemoteEndPoint);
 
@@ -70,6 +70,7 @@ namespace SimpleNetworking.Server
                     InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, loggerFactory, serializer, orderingService,
                         cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
                     clients.TryAdd(clientId, insecureClient);
+                    await tcpNetworkTransport.SendData(Encoding.Unicode.GetBytes(Id));
                     OnClientConnected?.Invoke(insecureClient);
                     break;
                 case HandshakeResults.ExsistingClientReconnected:

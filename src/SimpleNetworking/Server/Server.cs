@@ -22,6 +22,7 @@ namespace SimpleNetworking.Server
         protected ConcurrentDictionary<string, IClient> clients;
 
         protected enum HandshakeResults { NewClientConnected, ExsistingClientReconnected, HandshakeFailed }
+        protected string Id { get; private set; }
 
         protected int millisecondsIntervalForPacketResend;
         protected ILoggerFactory loggerFactory;
@@ -39,6 +40,7 @@ namespace SimpleNetworking.Server
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator, 
             int millisecondsIntervalForPacketResend, CancellationToken cancellationToken)
         {
+            Id = Guid.NewGuid().ToString();
             this.loggerFactory = loggerFactory;
             this.serializer = serializer;
             this.orderingService = orderingService;
@@ -64,7 +66,7 @@ namespace SimpleNetworking.Server
 
             tcpNetworkTransport.OnDataReceived += handshakeHandler;
 
-            if (handshakeCompleteEvent.WaitOne(handshakeTimeout))
+            if (handshakeCompleteEvent.WaitOne(handshakeTimeout) && Guid.TryParse(_clientId, out _))
             {
                 tcpNetworkTransport.OnDataReceived -= handshakeHandler;
                 clientId = _clientId;
@@ -76,7 +78,7 @@ namespace SimpleNetworking.Server
                 else
                 {
                     logger?.LogInformation("{0} is a new client", client.Client.RemoteEndPoint);
-                    return HandshakeResults.ExsistingClientReconnected;
+                    return HandshakeResults.NewClientConnected;
                 }
             }
             else

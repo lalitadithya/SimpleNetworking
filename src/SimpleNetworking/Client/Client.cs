@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using SimpleNetworking.Exceptions;
 using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
@@ -18,12 +19,14 @@ namespace SimpleNetworking.Client
     {
         private string hostName;
         private int port;
+        private const int handshakeTimeout = 30 * 1000;
 
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
         private Timer packetResendTimer;
 
         private string id;
+        private string serverId;
         private NetworkTransport networkTransport;
         private ISerializer serializer;
         private ILogger logger;
@@ -94,11 +97,36 @@ namespace SimpleNetworking.Client
 
         protected async Task Connect(bool isReconnect)
         {
-            networkTransport = GetNetworkTransport();
-            InitNetworkTransport(networkTransport, true);
+            NetworkTransport networkTransport = GetNetworkTransport();
             networkTransport.Connect(hostName, port);
-            await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+            await PerformHandshake(networkTransport);
+            InitNetworkTransport(networkTransport, true);
             StartPacketResend(isReconnect);
+        }
+
+        private async Task PerformHandshake(NetworkTransport networkTransport)
+        {
+            AutoResetEvent handshakeCompleteEvent = new AutoResetEvent(false);
+
+            DataReceivedHandler handshakeHandler = (data) =>
+            {
+                serverId = Encoding.Unicode.GetString(data);
+                handshakeCompleteEvent.Set();
+            };
+
+            await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+
+            networkTransport.OnDataReceived += handshakeHandler;
+            if (handshakeCompleteEvent.WaitOne(handshakeTimeout) && Guid.TryParse(serverId, out _))
+            {
+                networkTransport.OnDataReceived -= handshakeHandler;
+            }
+            else
+            {
+                networkTransport.OnDataReceived -= handshakeHandler;
+                logger.LogWarning("handshake failed");
+                throw new HandshakeFailedException();
+            }
         }
 
         public async Task SendData(object payload)

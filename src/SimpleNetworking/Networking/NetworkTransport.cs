@@ -198,7 +198,7 @@ namespace SimpleNetworking.Networking
         {
             if (stream == null)
             {
-                stream = tcpClient.GetStream();
+                this.stream = tcpClient.GetStream();
             }
             else
             {
