@@ -1,4 +1,5 @@
 ﻿using SimpleNetworking.Models;
+using SimpleNetworking.Networking;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +15,8 @@ namespace SimpleNetworking.Client
         event PacketReceivedHandler OnPacketReceived;
         event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
         event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
+
+        void ClientReconnected(NetworkTransport networkTransport);
         Task SendData(object packet);
     }
 }

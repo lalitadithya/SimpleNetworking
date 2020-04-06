@@ -73,7 +73,7 @@ namespace SimpleNetworking.Client
             StartPacketResend(false);
         }
 
-        public void ClientReconnected(TlsNetworkTransport networkTransport)
+        public override void ClientReconnected(NetworkTransport networkTransport)
         {
             this.networkTransport.OnDataReceived -= DataReceived;
             this.networkTransport.OnConnectionLost -= NetworkTransport_OnConnectionLostNoReconnect;

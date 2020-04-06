@@ -3,6 +3,7 @@ using SimpleNetworking.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,13 +18,17 @@ namespace SimpleNetworking.Networking
         private SemaphoreSlim dropConnectionSemaphore = new SemaphoreSlim(1, 1);
 
         protected Stream stream;
+        protected TcpClient tcpClient;
         protected CancellationToken cancellationToken;
         protected ILogger logger;
+        private ILoggerFactory loggerFactory;
 
         private enum PacketTypes { KeepAlive = 0, DataPacket = 1 }
 
         public event DataReceivedHandler OnDataReceived;
         public event ConnectionLostHandler OnConnectionLost;
+
+        public abstract void Connect(string hostname, int port);
 
         public virtual async Task SendData(byte[] data)
         {
@@ -70,7 +75,7 @@ namespace SimpleNetworking.Networking
                     {
                         await ListenLoop();
                     }
-                    catch(OperationCanceledException)
+                    catch (OperationCanceledException)
                     {
                         DropConnection();
                         break;
@@ -117,7 +122,7 @@ namespace SimpleNetworking.Networking
             do
             {
                 int readResult = await stream.ReadAsync(data, offset, length - offset, cancellationToken);
-                if(readResult <= 0)
+                if (readResult <= 0)
                 {
                     throw new EndOfStreamReachedException();
                 }
@@ -147,6 +152,57 @@ namespace SimpleNetworking.Networking
                 {
                     dropConnectionSemaphore.Release();
                 }
+            }
+        }
+
+        protected void Stop()
+        {
+            DropConnection();
+            tcpClient?.Close();
+        }
+
+        protected void Init(ILoggerFactory loggerFactory, CancellationToken cancellationToken)
+        {
+            this.cancellationToken = cancellationToken;
+            this.loggerFactory = loggerFactory;
+
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger(GetType());
+            }
+
+            cancellationToken.Register(() => Stop());
+        }
+
+        protected void Init(ILoggerFactory loggerFactory, CancellationToken cancellationToken, TcpClient tcpClient, Stream stream = null)
+        {
+            this.cancellationToken = cancellationToken;
+            this.loggerFactory = loggerFactory;
+            Init(tcpClient);
+            SetStream(stream);
+
+            if (loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger(GetType());
+            }
+
+            cancellationToken.Register(() => Stop());
+        }
+
+        protected void Init(TcpClient tcpClient)
+        {
+            this.tcpClient = tcpClient;
+        }
+
+        protected void SetStream(Stream stream = null)
+        {
+            if (stream == null)
+            {
+                stream = tcpClient.GetStream();
+            }
+            else
+            {
+                this.stream = stream;
             }
         }
     }

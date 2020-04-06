@@ -39,6 +39,8 @@ namespace SimpleNetworking.Client
         protected abstract void RaisePeerDeviceReconnected();
         protected abstract void RaisePeerDeviceDisconnected();
 
+        public abstract void ClientReconnected(NetworkTransport networkTransport);
+
         protected  void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,

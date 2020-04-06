@@ -7,48 +7,25 @@ using System.Threading;
 
 namespace SimpleNetworking.Networking
 {
-    public class TcpNetworkTransport : NetworkTransport, ITcpNetworkTransport
+    public class TcpNetworkTransport : NetworkTransport
     {
-        private ILoggerFactory loggerFactory;
-
-        private TcpClient tcpClient; 
-
         public TcpNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory)
         {
-            this.cancellationToken = cancellationToken;
-            this.loggerFactory = loggerFactory;
-
-            cancellationToken.Register(() => Stop());
+            Init(loggerFactory, cancellationToken);
         }
 
         internal TcpNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient, ILoggerFactory loggerFactory)
         {
-            this.cancellationToken = cancellationToken;
-            this.tcpClient = tcpClient;
-            Initialize(loggerFactory);
-        }
-
-        public void Connect(string hostName, int port)
-        {
-            tcpClient = new TcpClient(hostName, port);
-            Initialize(loggerFactory);
-        }
-
-        private void Initialize(ILoggerFactory loggerFactory)
-        {
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
-            }
-
-            stream = tcpClient.GetStream();
+            Init(loggerFactory, cancellationToken, tcpClient);
             StartReading();
         }
 
-        private void Stop()
+        public override void Connect(string hostName, int port)
         {
-            DropConnection();
-            tcpClient?.Close();
+            Init(new TcpClient(hostName, port));
+            SetStream();
+            StartReading();
         }
+
     }
 }

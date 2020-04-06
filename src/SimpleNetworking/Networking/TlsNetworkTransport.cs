@@ -11,44 +11,36 @@ using System.Threading.Tasks;
 
 namespace SimpleNetworking.Networking
 {
-    public class TlsNetworkTransport : NetworkTransport, ITlsNetworkTransport
-    {
-        private readonly ILoggerFactory loggerFactory;
+    public delegate bool ServerCertificateValidationCallback(X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors);
 
-        private TcpClient tcpClient;
+    public class TlsNetworkTransport : NetworkTransport
+    {
         private readonly ServerCertificateValidationCallback serverCertificateValidationCallback;
         private readonly SslProtocols sslProtocols;
 
         public TlsNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory, 
             ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols)
         {
-            this.cancellationToken = cancellationToken;
-            this.loggerFactory = loggerFactory;
+            Init(loggerFactory, cancellationToken);
+
             this.serverCertificateValidationCallback = serverCertificateValidationCallback;
             this.sslProtocols = sslProtocols;
-
-            cancellationToken.Register(() => Stop());
         }
 
         internal TlsNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient, ILoggerFactory loggerFactory, SslStream sslStream)
         {
-            this.cancellationToken = cancellationToken;
-            this.tcpClient = tcpClient;
-            Initialize(loggerFactory);
-
-            stream = sslStream;
+            Init(loggerFactory, cancellationToken, tcpClient, sslStream);
             StartReading();
         }
 
-        public async Task Connect(string hostname, int port)
+        public override void Connect(string hostname, int port)
         {
-            Initialize(loggerFactory);
-            tcpClient = new TcpClient(hostname, port);
+            TcpClient tcpClient = new TcpClient(hostname, port);
 
             SslStream sslStream = new SslStream(tcpClient.GetStream(), false, ValidateServerCertificate, null, EncryptionPolicy.RequireEncryption);
             try
             {
-                await sslStream.AuthenticateAsClientAsync(hostname, null, sslProtocols, true);
+                sslStream.AuthenticateAsClient(hostname, null, sslProtocols, true);
             }
             catch (Exception e)
             {
@@ -57,7 +49,8 @@ namespace SimpleNetworking.Networking
                 throw;
             }
 
-            stream = sslStream;
+            Init(tcpClient);
+            SetStream(sslStream);
             StartReading();
         }
 
@@ -75,18 +68,5 @@ namespace SimpleNetworking.Networking
             }
         }
 
-        private void Initialize(ILoggerFactory loggerFactory)
-        {
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<TlsNetworkTransport>();
-            }
-        }
-
-        private void Stop()
-        {
-            DropConnection();
-            tcpClient?.Close();
-        }
     }
 }

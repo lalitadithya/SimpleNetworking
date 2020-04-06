@@ -67,7 +67,7 @@ namespace SimpleNetworking.Client
             StartPacketResend(false);
         }
 
-        public void ClientReconnected(TcpNetworkTransport networkTransport)
+        public override void ClientReconnected(NetworkTransport networkTransport)
         {
             this.networkTransport.OnDataReceived -= DataReceived;
             this.networkTransport.OnConnectionLost -= NetworkTransport_OnConnectionLostNoReconnect;
@@ -90,7 +90,7 @@ namespace SimpleNetworking.Client
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostWithReconnect;
 
-            a((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
+            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
         }
 
