@@ -5,6 +5,7 @@ using SimpleNetworking.IdempotencyService;
 using SimpleNetworking.Models;
 using SimpleNetworking.Networking;
 using SimpleNetworking.OrderingService;
+using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
@@ -23,17 +24,9 @@ namespace SimpleNetworking.Tests.Client
         {
             public ClientConcrete(NetworkTransport networkTransport, ISerializer serializer, int? packetResendTime = null)
             {
-                this.networkTransport = networkTransport;
-                this.serializer = serializer;
-                this.sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(10);
-                this.receiveIdempotencyService = new ReceiveIdempotencyService<string>(30 * 60 * 1000);
-                this.orderingService = new SimplePacketOrderingService();
-                networkTransport.OnDataReceived += DataReceived;
-                if (packetResendTime.HasValue)
-                {
-                    millisecondsIntervalForPacketResend = packetResendTime.Value;
-                    StartPacketResend(false);
-                }
+                Init(null, serializer, new SimplePacketOrderingService(), CancellationToken.None,
+                new SendIdempotencyService<Guid, Packet>(10), new ReceiveIdempotencyService<string>(30 * 60 * 1000),
+                new ExponentialSequenceGenerator(60 * 1000), packetResendTime ?? 60 * 60 * 1000, networkTransport);
             }
 
             public new void StopPacketResend()
