@@ -24,7 +24,6 @@ namespace SimpleNetworking.Client
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend, ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols)
         {
-            id = Guid.NewGuid().ToString();
             this.serverCertificateValidationCallback = serverCertificateValidationCallback;
             this.sslProtocols = sslProtocols;
 
@@ -40,13 +39,12 @@ namespace SimpleNetworking.Client
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend);
-            InitNetworkTransport(tlsNetworkTransport, false);
+                millisecondsIntervalForPacketResend, tlsNetworkTransport);
         }
 
         protected override NetworkTransport GetNetworkTransport()
         {
-            return new TlsNetworkTransport(cancellationToken, loggerFactory, serverCertificateValidationCallback, sslProtocols);
+            return new TlsNetworkTransport(CancellationToken, LoggerFactory, serverCertificateValidationCallback, sslProtocols);
         }
     }
 }

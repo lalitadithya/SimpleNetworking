@@ -15,14 +15,11 @@ namespace SimpleNetworking.Client
 {
     public class InsecureClient : Client
     {
-
         public InsecureClient(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend)
         {
-            id = Guid.NewGuid().ToString();
-
             Init(loggerFactory, serializer, orderingService, cancellationToken, 
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, 
                 millisecondsIntervalForPacketResend);
@@ -35,14 +32,12 @@ namespace SimpleNetworking.Client
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend);
-
-            InitNetworkTransport(tcpNetworkTransport, false);
+                millisecondsIntervalForPacketResend, tcpNetworkTransport);
         }
 
         protected override NetworkTransport GetNetworkTransport()
         {
-            return new TcpNetworkTransport(cancellationToken, loggerFactory);
+            return new TcpNetworkTransport(CancellationToken, LoggerFactory);
         }
     }
 }

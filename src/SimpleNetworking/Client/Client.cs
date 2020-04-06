@@ -23,17 +23,18 @@ namespace SimpleNetworking.Client
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
         private Timer packetResendTimer;
 
-        protected string id;
-        protected NetworkTransport networkTransport;
-        protected ISerializer serializer;
-        protected ILogger logger;
-        protected ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
-        protected IReceiveIdempotencyService<string> receiveIdempotencyService;
-        protected ISequenceGenerator delaySequenceGenerator;
-        protected CancellationToken cancellationToken;
-        protected IOrderingService orderingService;
-        protected int millisecondsIntervalForPacketResend;
-        protected ILoggerFactory loggerFactory;
+        private string id;
+        private NetworkTransport networkTransport;
+        private ISerializer serializer;
+        private ILogger logger;
+        private ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
+        private IReceiveIdempotencyService<string> receiveIdempotencyService;
+        private ISequenceGenerator delaySequenceGenerator;
+        private IOrderingService orderingService;
+        private int millisecondsIntervalForPacketResend;
+
+        protected CancellationToken CancellationToken { get; private set; }
+        protected ILoggerFactory LoggerFactory { get; private set; }
 
         public event PacketReceivedHandler OnPacketReceived;
         public event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
@@ -54,21 +55,34 @@ namespace SimpleNetworking.Client
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend)
         {
-            this.loggerFactory = loggerFactory;
+            id = Guid.NewGuid().ToString();
+            LoggerFactory = loggerFactory;
             this.sendIdempotencyService = sendIdempotencyService;
             this.receiveIdempotencyService = receiveIdempotencyService;
-            this.cancellationToken = cancellationToken;
+            CancellationToken = cancellationToken;
             this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
             this.serializer = serializer;
             this.orderingService = orderingService;
             this.delaySequenceGenerator = delaySequenceGenerator;
 
-            this.cancellationToken.Register(() => Cancel());
 
-            if (this.loggerFactory != null)
+            CancellationToken.Register(() => Cancel());
+
+            if (LoggerFactory != null)
             {
                 logger = loggerFactory.CreateLogger(GetType());
             }
+        }
+
+        protected void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
+            int millisecondsIntervalForPacketResend, NetworkTransport networkTransport)
+        {
+            Init(loggerFactory, serializer, orderingService, cancellationToken,
+                sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
+                millisecondsIntervalForPacketResend);
+            InitNetworkTransport(networkTransport, false);
         }
 
         public async Task Connect(string hostName, int port)
@@ -81,6 +95,7 @@ namespace SimpleNetworking.Client
         protected async Task Connect(bool isReconnect)
         {
             networkTransport = GetNetworkTransport();
+            InitNetworkTransport(networkTransport, true);
             networkTransport.Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
             StartPacketResend(isReconnect);
@@ -88,7 +103,7 @@ namespace SimpleNetworking.Client
 
         public async Task SendData(object payload)
         {
-            if (cancellationToken.IsCancellationRequested)
+            if (CancellationToken.IsCancellationRequested)
             {
                 throw new ObjectDisposedException(GetType().Name);
             }
@@ -117,11 +132,6 @@ namespace SimpleNetworking.Client
             }
         }
 
-        private async Task SendDataUsingTransport(Packet packet)
-        {
-            await networkTransport.SendData(serializer.Serilize(packet));
-        }
-
         protected void DataReceived(byte[] data)
         {
             Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
@@ -148,15 +158,15 @@ namespace SimpleNetworking.Client
             }
         }
 
-        protected void Reconnect()
+        protected async void Reconnect()
         {
             IEnumerator<int> delayEnumerator = delaySequenceGenerator.GetEnumerator();
             ClientDisconnected();
-            while (!cancellationToken.IsCancellationRequested)
+            while (!CancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    Connect(true).Wait();
+                    await Connect(true);
                     ClientReconnected();
                     break;
                 }
@@ -166,14 +176,14 @@ namespace SimpleNetworking.Client
                     delayEnumerator.MoveNext();
                     int millisecondsDelay = delayEnumerator.Current * 1000;
                     logger?.LogInformation("Will reconnect in {0} milliseconds", millisecondsDelay);
-                    Task.Delay(millisecondsDelay).Wait();
+                    await Task.Delay(millisecondsDelay);
                 }
             }
         }
 
         protected void ClientDisconnected()
         {
-            if (!cancellationToken.IsCancellationRequested)
+            if (!CancellationToken.IsCancellationRequested)
             {
                 receiveIdempotencyService.PausePacketExpiry();
                 StopPacketResend();
@@ -239,7 +249,7 @@ namespace SimpleNetworking.Client
             }
         }
 
-        protected void InitNetworkTransport(NetworkTransport networkTransport, bool canReconnect)
+        private void InitNetworkTransport(NetworkTransport networkTransport, bool canReconnect)
         {
             this.networkTransport = networkTransport;
 
@@ -277,6 +287,11 @@ namespace SimpleNetworking.Client
             {
                 logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
             }
+        }
+
+        private async Task SendDataUsingTransport(Packet packet)
+        {
+            await networkTransport.SendData(serializer.Serilize(packet));
         }
 
         protected void Cancel()
