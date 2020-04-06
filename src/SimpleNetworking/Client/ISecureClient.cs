@@ -6,6 +6,6 @@ namespace SimpleNetworking.Client
 {
     public interface ISecureClient
     {
-        void Connect(string hostname, long port, string pfxFilePath, string pfxFilePassword);
+        void Connect(string hostName, int port);
     }
 }

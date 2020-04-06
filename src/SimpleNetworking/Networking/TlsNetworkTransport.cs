@@ -13,13 +13,14 @@ namespace SimpleNetworking.Networking
 {
     public class TlsNetworkTransport : NetworkTransport, ITlsNetworkTransport
     {
-        private ILoggerFactory loggerFactory;
+        private readonly ILoggerFactory loggerFactory;
 
         private TcpClient tcpClient;
-        private ServerCertificateValidationCallback serverCertificateValidationCallback;
-        private SslProtocols sslProtocols;
+        private readonly ServerCertificateValidationCallback serverCertificateValidationCallback;
+        private readonly SslProtocols sslProtocols;
 
-        public TlsNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory, ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols)
+        public TlsNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory, 
+            ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols)
         {
             this.cancellationToken = cancellationToken;
             this.loggerFactory = loggerFactory;
@@ -78,7 +79,7 @@ namespace SimpleNetworking.Networking
         {
             if (loggerFactory != null)
             {
-                logger = loggerFactory.CreateLogger<TcpNetworkTransport>();
+                logger = loggerFactory.CreateLogger<TlsNetworkTransport>();
             }
         }
 

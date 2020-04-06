@@ -19,8 +19,6 @@ namespace SimpleNetworking.Client
         private string hostName;
         private int port;
 
-        private ILoggerFactory loggerFactory;
-
         public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
         public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
 
@@ -34,6 +32,11 @@ namespace SimpleNetworking.Client
             Init(loggerFactory, serializer, orderingService, cancellationToken, 
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, 
                 millisecondsIntervalForPacketResend);
+
+            if (this.loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<InsecureClient>();
+            }
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
@@ -48,6 +51,11 @@ namespace SimpleNetworking.Client
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
                 millisecondsIntervalForPacketResend);
+
+            if (this.loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger<InsecureClient>();
+            }
         }
 
         public async void Connect(string hostName, int port)
@@ -82,35 +90,13 @@ namespace SimpleNetworking.Client
             networkTransport.OnDataReceived += DataReceived;
             networkTransport.OnConnectionLost += NetworkTransport_OnConnectionLostWithReconnect;
 
-            ((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
+            a((ITcpNetworkTransport)networkTransport).Connect(hostName, port);
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
         }
 
         private void NetworkTransport_OnConnectionLostWithReconnect()
         {
             Task.Run(async () => await Reconnect());
-        }
-
-        private void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService, 
-            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService, 
-            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator, 
-            int millisecondsIntervalForPacketResend)
-        {
-            this.loggerFactory = loggerFactory;
-            this.sendIdempotencyService = sendIdempotencyService;
-            this.receiveIdempotencyService = receiveIdempotencyService;
-            this.cancellationToken = cancellationToken;
-            this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
-            this.serializer = serializer;
-            this.orderingService = orderingService;
-            this.delaySequenceGenerator = delaySequenceGenerator;
-
-            if (loggerFactory != null)
-            {
-                logger = loggerFactory.CreateLogger<InsecureClient>();
-            }
-
-            this.cancellationToken.Register(() => Cancel());
         }
 
         protected override void RaisePeerDeviceReconnected()

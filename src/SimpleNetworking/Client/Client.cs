@@ -29,6 +29,7 @@ namespace SimpleNetworking.Client
         protected CancellationToken cancellationToken;
         protected IOrderingService orderingService;
         protected int millisecondsIntervalForPacketResend;
+        protected ILoggerFactory loggerFactory;
 
         public event PacketReceivedHandler OnPacketReceived;
         public abstract event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
@@ -37,6 +38,23 @@ namespace SimpleNetworking.Client
         protected abstract Task Connect();
         protected abstract void RaisePeerDeviceReconnected();
         protected abstract void RaisePeerDeviceDisconnected();
+
+        protected  void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
+            IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
+            int millisecondsIntervalForPacketResend)
+        {
+            this.loggerFactory = loggerFactory;
+            this.sendIdempotencyService = sendIdempotencyService;
+            this.receiveIdempotencyService = receiveIdempotencyService;
+            this.cancellationToken = cancellationToken;
+            this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
+            this.serializer = serializer;
+            this.orderingService = orderingService;
+            this.delaySequenceGenerator = delaySequenceGenerator;
+
+            this.cancellationToken.Register(() => Cancel());
+        }
 
         public async Task SendData(object payload)
         {
