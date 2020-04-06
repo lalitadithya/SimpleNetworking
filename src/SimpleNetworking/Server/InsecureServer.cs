@@ -75,6 +75,7 @@ namespace SimpleNetworking.Server
                     break;
                 case HandshakeResults.ExsistingClientReconnected:
                     clients[clientId].ClientReconnected(tcpNetworkTransport);
+                    await tcpNetworkTransport.SendData(Encoding.Unicode.GetBytes(Id));
                     break;
                 case HandshakeResults.HandshakeFailed:
                     tcpNetworkTransport.DropConnection();
