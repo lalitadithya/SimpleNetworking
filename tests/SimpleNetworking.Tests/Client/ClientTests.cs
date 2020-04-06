@@ -36,25 +36,12 @@ namespace SimpleNetworking.Tests.Client
                 }
             }
 
-            public override event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
-            public override event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
-
             public new void StopPacketResend()
             {
                 base.StopPacketResend();
             }
 
-            protected override Task Connect()
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override void RaisePeerDeviceDisconnected()
-            {
-                throw new NotImplementedException();
-            }
-
-            protected override void RaisePeerDeviceReconnected()
+            protected override NetworkTransport GetNetworkTransport()
             {
                 throw new NotImplementedException();
             }
@@ -76,6 +63,11 @@ namespace SimpleNetworking.Tests.Client
             public void InvokeDataReceived(byte[] data)
             {
                 RaiseOnDataReceivedEvent(data);
+            }
+
+            public override void Connect(string hostname, int port)
+            {
+                throw new NotImplementedException();
             }
         }
 

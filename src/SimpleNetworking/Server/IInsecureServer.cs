@@ -8,10 +8,10 @@ using System.Threading;
 
 namespace SimpleNetworking.Server
 {
-    public delegate void ClientConnectedHandler(IInsecureClient client);
+    public delegate void ClientConnectedHandler(InsecureClient client);
     public interface IInsecureServer
     {
         event ClientConnectedHandler OnClientConnected;
-        void StartListening(IPAddress localAddress, int port, ISerializer serializer, CancellationToken cancellationToken);
+        void StartListening(IPAddress localAddress, int port);
     }
 }

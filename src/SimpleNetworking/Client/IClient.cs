@@ -18,5 +18,6 @@ namespace SimpleNetworking.Client
 
         void ClientReconnected(NetworkTransport networkTransport);
         Task SendData(object packet);
+        Task Connect(string hostName, int port);
     }
 }

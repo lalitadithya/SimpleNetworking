@@ -38,11 +38,8 @@ namespace SimpleNetworking.Server
             }
         }
 
-        public void StartListening(IPAddress localAddress, int port, ISerializer serializer, CancellationToken cancellationToken)
+        public void StartListening(IPAddress localAddress, int port)
         {
-            this.cancellationToken = cancellationToken;
-            this.serializer = serializer;
-
             cancellationToken.Register(() => Stop());
 
             tcpListener = new TcpListener(localAddress, port);

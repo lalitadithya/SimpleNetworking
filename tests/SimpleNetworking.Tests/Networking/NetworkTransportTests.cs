@@ -17,6 +17,11 @@ namespace SimpleNetworking.Tests.Networking
             this.stream = stream;
             this.cancellationToken = cancellationToken;
         }
+
+        public override void Connect(string hostname, int port)
+        {
+            throw new NotImplementedException();
+        }
     }
     #endregion
 

@@ -19,7 +19,7 @@ namespace BasicSample
 
     class Program
     {
-        static IInsecureClient client;
+        static InsecureClient client;
 
         static void Main(string[] args)
         {
@@ -40,15 +40,15 @@ namespace BasicSample
                     client.OnPeerDeviceDisconnected += Client_OnPeerDeviceDisconnected;
                     client.OnPeerDeviceReconnected += Client_OnPeerDeviceReconnected;
                     string ip = Console.ReadLine();
-                    client.Connect(ip, 9000);
+                    client.Connect(ip, 9000).Wait();
                     Console.WriteLine("Connect success");
-                    Task.Run(() => SendNumbers());
+                    Task.Run(async () => await SendNumbers());
                     break;
                 case 2:
                     InsecureServer server = SimpleNetworking.Builder.Builder.InsecureServer.WithLogger(factory).WithCancellationToken(cts.Token).Build();
 
                     server.OnClientConnected += Server_OnClientConnected;
-                    server.StartListening(IPAddress.Any, 9000, new JsonSerializer(), cts.Token);
+                    server.StartListening(IPAddress.Any, 9000);
                     Console.WriteLine("Server started");
                     break;
             }
@@ -68,12 +68,12 @@ namespace BasicSample
             Console.WriteLine("Peer device disconnected");
         }
 
-        private static void SendNumbers()
+        private static async Task SendNumbers()
         {
             int i = 0;
             while (true)
             {
-                client.SendData(new MyPacket
+                await client.SendData(new MyPacket
                 {
                     Data = $"{i++}"
                 });
@@ -87,17 +87,17 @@ namespace BasicSample
             Console.WriteLine("Got: " + packet.Data);
         }
 
-        private static void Client_OnPacketReceived1(object data)
+        private static async void Client_OnPacketReceived1(object data)
         {
             MyPacket packet = (MyPacket)data;
             Console.WriteLine("Got: " + packet.Data);
-            client.SendData(new MyPacket
+            await client.SendData(new MyPacket
             {
                 Data = $"{packet.Data}"
             });
         }
 
-        private static void Server_OnClientConnected(IInsecureClient client1)
+        private static void Server_OnClientConnected(InsecureClient client1)
         {
             Console.WriteLine("Client connected");
             client = client1;

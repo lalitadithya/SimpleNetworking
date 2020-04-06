@@ -16,10 +16,14 @@ namespace SimpleNetworking.Client
 {
     public abstract class Client : IClient
     {
+        private string hostName;
+        private int port;
+
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
         private Timer packetResendTimer;
 
+        protected string id;
         protected NetworkTransport networkTransport;
         protected ISerializer serializer;
         protected ILogger logger;
@@ -32,16 +36,20 @@ namespace SimpleNetworking.Client
         protected ILoggerFactory loggerFactory;
 
         public event PacketReceivedHandler OnPacketReceived;
-        public abstract event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
-        public abstract event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
+        public event PeerDeviceDisconnectedHandler OnPeerDeviceDisconnected;
+        public event PeerDeviceReconnectedHandler OnPeerDeviceReconnected;
 
-        protected abstract Task Connect();
-        protected abstract void RaisePeerDeviceReconnected();
-        protected abstract void RaisePeerDeviceDisconnected();
+        protected abstract NetworkTransport GetNetworkTransport();
 
-        public abstract void ClientReconnected(NetworkTransport networkTransport);
+        public void ClientReconnected(NetworkTransport networkTransport)
+        {
+            this.networkTransport.DropConnection();
 
-        protected  void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
+            InitNetworkTransport(networkTransport, false);
+            ClientReconnected();
+        }
+
+        protected void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend)
@@ -56,11 +64,31 @@ namespace SimpleNetworking.Client
             this.delaySequenceGenerator = delaySequenceGenerator;
 
             this.cancellationToken.Register(() => Cancel());
+
+            if (this.loggerFactory != null)
+            {
+                logger = loggerFactory.CreateLogger(GetType());
+            }
+        }
+
+        public async Task Connect(string hostName, int port)
+        {
+            this.hostName = hostName;
+            this.port = port;
+            await Connect(false);
+        }
+
+        protected async Task Connect(bool isReconnect)
+        {
+            networkTransport = GetNetworkTransport();
+            networkTransport.Connect(hostName, port);
+            await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
+            StartPacketResend(isReconnect);
         }
 
         public async Task SendData(object payload)
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
             {
                 throw new ObjectDisposedException(GetType().Name);
             }
@@ -120,7 +148,7 @@ namespace SimpleNetworking.Client
             }
         }
 
-        protected async Task Reconnect()
+        protected void Reconnect()
         {
             IEnumerator<int> delayEnumerator = delaySequenceGenerator.GetEnumerator();
             ClientDisconnected();
@@ -128,7 +156,7 @@ namespace SimpleNetworking.Client
             {
                 try
                 {
-                    await Connect();
+                    Connect(true).Wait();
                     ClientReconnected();
                     break;
                 }
@@ -138,7 +166,7 @@ namespace SimpleNetworking.Client
                     delayEnumerator.MoveNext();
                     int millisecondsDelay = delayEnumerator.Current * 1000;
                     logger?.LogInformation("Will reconnect in {0} milliseconds", millisecondsDelay);
-                    await Task.Delay(millisecondsDelay);
+                    Task.Delay(millisecondsDelay).Wait();
                 }
             }
         }
@@ -208,6 +236,46 @@ namespace SimpleNetworking.Client
             catch (Exception exception)
             {
                 logger?.LogError(exception, "OnPacketReceived threw an exception");
+            }
+        }
+
+        protected void InitNetworkTransport(NetworkTransport networkTransport, bool canReconnect)
+        {
+            this.networkTransport = networkTransport;
+
+            if (canReconnect)
+            {
+                networkTransport.OnDataReceived += DataReceived;
+                networkTransport.OnConnectionLost += Reconnect;
+            }
+            else
+            {
+                networkTransport.OnDataReceived += DataReceived;
+                networkTransport.OnConnectionLost += ClientDisconnected;
+            }
+        }
+
+        private  void RaisePeerDeviceReconnected()
+        {
+            try
+            {
+                OnPeerDeviceReconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
+            }
+        }
+
+        private void RaisePeerDeviceDisconnected()
+        {
+            try
+            {
+                OnPeerDeviceDisconnected?.Invoke();
+            }
+            catch (Exception e)
+            {
+                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
             }
         }
 
