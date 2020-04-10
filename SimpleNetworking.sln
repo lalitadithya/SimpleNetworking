@@ -26,7 +26,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleNetworking", "src\Sim
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleNetworking.Tests", "tests\SimpleNetworking.Tests\SimpleNetworking.Tests.csproj", "{2C0A18BC-09A0-4181-A0D5-A848BA6A8826}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicSample", "samples\BasicSample\BasicSample.csproj", "{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicSample", "samples\BasicSample\BasicSample.csproj", "{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureSample", "samples\SecureSample\SecureSample.csproj", "{185633DD-E11F-4B07-9643-183282424C67}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,6 +48,10 @@ Global
 		{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{185633DD-E11F-4B07-9643-183282424C67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{185633DD-E11F-4B07-9643-183282424C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{185633DD-E11F-4B07-9643-183282424C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{185633DD-E11F-4B07-9643-183282424C67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +60,7 @@ Global
 		{0EFE4EB8-98B8-41C9-9071-89FD2B57735A} = {CB37AE9B-3ACE-4260-82CC-187A0D44B526}
 		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826} = {BD2D51B8-9309-4B07-AE43-58A1E172547E}
 		{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83} = {3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}
+		{185633DD-E11F-4B07-9643-183282424C67} = {3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0EDBAAFB-3FA4-47D3-8A25-27340710D664}

@@ -21,5 +21,21 @@ namespace SimpleNetworking.Builder
                 return new InsecureServerBuilder();
             }
         }
+
+        public static SecureClientBuilder SecureClient
+        {
+            get
+            {
+                return new SecureClientBuilder();
+            }
+        }
+
+        public static SecureServerBuilder SecureServer
+        {
+            get
+            {
+                return new SecureServerBuilder();
+            }
+        }
     }
 }

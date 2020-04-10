@@ -1,16 +1,15 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Options;
 using SimpleNetworking.Client;
-using SimpleNetworking.Serializer;
 using SimpleNetworking.Server;
 using System;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BasicSample
+namespace SecureSample
 {
     public class MyPacket
     {
@@ -34,7 +33,10 @@ namespace BasicSample
             switch (choice)
             {
                 case 1:
-                    client = SimpleNetworking.Builder.Builder.InsecureClient.WithLogger(factory).WithCancellationToken(cts.Token).Build();
+                    client = SimpleNetworking.Builder.Builder.SecureClient
+                        .WithLogger(factory)
+                        .WithCancellationToken(cts.Token)
+                        .Build(ServerCertificateValidationCallback);
 
                     client.OnPacketReceived += Client_OnPacketReceived;
                     client.OnPeerDeviceDisconnected += Client_OnPeerDeviceDisconnected;
@@ -45,7 +47,13 @@ namespace BasicSample
                     Task.Run(async () => await SendNumbers());
                     break;
                 case 2:
-                    InsecureServer server = SimpleNetworking.Builder.Builder.InsecureServer.WithLogger(factory).WithCancellationToken(cts.Token).Build();
+                    X509Certificate2Collection collection = new X509Certificate2Collection();
+                    collection.Import("certificate.pfx", "password", X509KeyStorageFlags.PersistKeySet);
+
+                    SecureServer server = SimpleNetworking.Builder.Builder.SecureServer
+                        .WithLogger(factory)
+                        .WithCancellationToken(cts.Token)
+                        .Build(collection[0]);
 
                     server.OnClientConnected += Server_OnClientConnected;
                     server.StartListening(IPAddress.Any, 9000);
@@ -56,6 +64,11 @@ namespace BasicSample
             Console.ReadKey();
             cts.Cancel();
             Console.ReadKey();
+        }
+
+        private static bool ServerCertificateValidationCallback(X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
 
         private static void Client_OnPeerDeviceReconnected()

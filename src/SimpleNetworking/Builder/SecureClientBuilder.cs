@@ -80,7 +80,7 @@ namespace SimpleNetworking.Builder
         }
 
         public SecureClient Build(ServerCertificateValidationCallback serverCertificateValidationCallback = null, 
-            SslProtocols sslProtocols = SslProtocols.Tls13, X509CertificateCollection clientCertificateCollection = null)
+            SslProtocols sslProtocols = SslProtocols.Tls12, X509CertificateCollection clientCertificateCollection = null)
         {
             return new SecureClient(loggerFactory, serializer, orderingService, cancellationToken, sendIdempotencyService,
                 receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend, serverCertificateValidationCallback,

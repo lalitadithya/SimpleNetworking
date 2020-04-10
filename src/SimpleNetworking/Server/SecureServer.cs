@@ -123,7 +123,14 @@ namespace SimpleNetworking.Server
                 }
                 else
                 {
-                    return sslPolicyErrors == SslPolicyErrors.None;
+                    if (clientCertificateRequired)
+                    {
+                        return sslPolicyErrors == SslPolicyErrors.None;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
             }
             catch (Exception e)
