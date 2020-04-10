@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleNetworking.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,7 +7,7 @@ namespace SimpleNetworking.Serializer
 {
     public interface ISerializer
     {
-        byte[] Serilize(object data);
-        object Deserilize(byte[] data, Type objectType);
+        byte[] Serilize(Packet packet);
+        Packet Deserilize(byte[] data);
     }
 }

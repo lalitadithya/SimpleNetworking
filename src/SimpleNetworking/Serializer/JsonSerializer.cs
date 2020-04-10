@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SimpleNetworking.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,14 +9,19 @@ namespace SimpleNetworking.Serializer
 {
     public class JsonSerializer : ISerializer
     {
-        public object Deserilize(byte[] data, Type objectType)
+        public Packet Deserilize(byte[] data)
         {
-            return (JsonConvert.DeserializeObject(Encoding.Unicode.GetString(data)) as JObject).ToObject(objectType);
+            Packet packet = JsonConvert.DeserializeObject<Packet>(Encoding.Unicode.GetString(data));
+            if (!string.IsNullOrWhiteSpace(packet.PacketHeader.ClassType))
+            {
+                packet.PacketPayload = (packet.PacketPayload as JObject).ToObject(Type.GetType(packet.PacketHeader.ClassType));
+            }
+            return packet;
         }
 
-        public byte[] Serilize(object data)
+        public byte[] Serilize(Packet packet)
         {
-            return Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(data));
+            return Encoding.Unicode.GetBytes(JsonConvert.SerializeObject(packet));
         }
     }
 }

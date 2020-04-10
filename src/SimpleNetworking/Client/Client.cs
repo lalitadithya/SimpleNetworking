@@ -162,7 +162,7 @@ namespace SimpleNetworking.Client
 
         protected void DataReceived(byte[] data)
         {
-            Packet packet = (Packet)serializer.Deserilize(data, typeof(Packet));
+            Packet packet = serializer.Deserilize(data);
 
             switch (packet.PacketHeader.PacketType)
             {
@@ -269,7 +269,7 @@ namespace SimpleNetworking.Client
         {
             try
             {
-                OnPacketReceived?.Invoke((packet.PacketPayload as JObject).ToObject(Type.GetType(packet.PacketHeader.ClassType)));
+                OnPacketReceived?.Invoke(packet.PacketPayload);
             }
             catch (Exception exception)
             {

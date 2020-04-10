@@ -84,7 +84,7 @@ namespace SimpleNetworking.Tests.Client
 
             await clientConcrete.SendData(myData);
 
-            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.AreEqual(typeof(MyData).AssemblyQualifiedName.ToString(), packet.PacketHeader.ClassType);
         }
 
@@ -101,7 +101,7 @@ namespace SimpleNetworking.Tests.Client
 
             await clientConcrete.SendData(myData);
 
-            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.IsTrue(Guid.TryParse(packet.PacketHeader.IdempotencyToken, out _));
         }
 
@@ -118,7 +118,7 @@ namespace SimpleNetworking.Tests.Client
 
             await clientConcrete.SendData(myData);
 
-            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.AreEqual(1, packet.PacketHeader.SequenceNumber);
         }
 
@@ -134,15 +134,15 @@ namespace SimpleNetworking.Tests.Client
             };
 
             await clientConcrete.SendData(myData);
-            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.AreEqual(1, packet.PacketHeader.SequenceNumber);
 
             await clientConcrete.SendData(myData);
-            packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.AreEqual(2, packet.PacketHeader.SequenceNumber);
 
             await clientConcrete.SendData(myData);
-            packet = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            packet = (Packet)serializer.Deserilize(networkTransport.Data);
             Assert.AreEqual(3, packet.PacketHeader.SequenceNumber);
         }
 
@@ -188,7 +188,7 @@ namespace SimpleNetworking.Tests.Client
 
             Thread.Sleep(2 * 1000);
 
-            Packet ackRecieved = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet ackRecieved = (Packet)serializer.Deserilize(networkTransport.Data);
 
             Assert.AreEqual(data.PacketHeader.IdempotencyToken, ackRecieved.PacketHeader.IdempotencyToken);
         }
@@ -212,7 +212,7 @@ namespace SimpleNetworking.Tests.Client
 
 
             await clientConcrete.SendData(myData);
-            Packet sentPacket = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet sentPacket = (Packet)serializer.Deserilize(networkTransport.Data);
 
             Packet ackPacket = ConstructAckPacket(sentPacket.PacketHeader.SequenceNumber, sentPacket.PacketHeader.IdempotencyToken);
             networkTransport.InvokeDataReceived(serializer.Serilize(ackPacket));
@@ -241,9 +241,9 @@ namespace SimpleNetworking.Tests.Client
 
             await clientConcrete.SendData(myData);
 
-            Packet sentPacket = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet sentPacket = (Packet)serializer.Deserilize(networkTransport.Data);
             Thread.Sleep(15 * 1000);
-            Packet sentPacket1 = (Packet)serializer.Deserilize(networkTransport.Data, typeof(Packet));
+            Packet sentPacket1 = (Packet)serializer.Deserilize(networkTransport.Data);
 
             clientConcrete.StopPacketResend();
 
