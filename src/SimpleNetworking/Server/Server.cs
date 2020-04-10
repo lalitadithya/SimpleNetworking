@@ -17,7 +17,7 @@ namespace SimpleNetworking.Server
 {
     public abstract class Server
     {
-        private const int handshakeTimeout = 30 * 1000;
+        private const int handshakeTimeout = 1 * 1000;
 
         protected ConcurrentDictionary<string, IClient> clients;
 

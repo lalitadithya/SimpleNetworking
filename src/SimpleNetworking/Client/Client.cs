@@ -19,7 +19,7 @@ namespace SimpleNetworking.Client
     {
         private string hostName;
         private int port;
-        private const int handshakeTimeout = 30 * 1000;
+        private const int handshakeTimeout = 1 * 1000;
 
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
@@ -47,8 +47,6 @@ namespace SimpleNetworking.Client
 
         public void ClientReconnected(NetworkTransport networkTransport)
         {
-            this.networkTransport.DropConnection();
-
             InitNetworkTransport(networkTransport, false);
             ClientReconnected();
         }
@@ -110,13 +108,21 @@ namespace SimpleNetworking.Client
 
             DataReceivedHandler handshakeHandler = (data) =>
             {
-                serverId = Encoding.Unicode.GetString(data);
-                handshakeCompleteEvent.Set();
+                string serverId = Encoding.Unicode.GetString(data);
+                if (string.IsNullOrWhiteSpace(this.serverId) || (!string.IsNullOrWhiteSpace(serverId) && serverId == this.serverId))
+                {
+                    this.serverId = serverId;
+                    handshakeCompleteEvent.Set();
+                }
+                else
+                {
+                    logger?.LogCritical("Server has sent spurious server id. Server might have restarted. Please restart client");
+                }
             };
 
+            networkTransport.OnDataReceived += handshakeHandler;
             await networkTransport.SendData(Encoding.Unicode.GetBytes(id));
 
-            networkTransport.OnDataReceived += handshakeHandler;
             if (handshakeCompleteEvent.WaitOne(handshakeTimeout) && Guid.TryParse(serverId, out _))
             {
                 networkTransport.OnDataReceived -= handshakeHandler;
@@ -222,7 +228,6 @@ namespace SimpleNetworking.Client
         protected void ClientReconnected()
         {
             receiveIdempotencyService.ResumePacketExpiry();
-            StartPacketResend(true);
             RaisePeerDeviceReconnected();
         }
 
@@ -280,6 +285,7 @@ namespace SimpleNetworking.Client
         private void InitNetworkTransport(NetworkTransport networkTransport, bool canReconnect)
         {
             this.networkTransport = networkTransport;
+            this.networkTransport.StartKeepAlive();
 
             if (canReconnect)
             {
@@ -293,7 +299,7 @@ namespace SimpleNetworking.Client
             }
         }
 
-        private  void RaisePeerDeviceReconnected()
+        private void RaisePeerDeviceReconnected()
         {
             try
             {
