@@ -17,14 +17,17 @@ namespace SimpleNetworking.Networking
     {
         private readonly ServerCertificateValidationCallback serverCertificateValidationCallback;
         private readonly SslProtocols sslProtocols;
+        private X509CertificateCollection clientCertificateCollection;
 
         public TlsNetworkTransport(CancellationToken cancellationToken, ILoggerFactory loggerFactory, 
-            ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols)
+            ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols,
+            X509CertificateCollection clientCertificateCollection)
         {
             Init(loggerFactory, cancellationToken);
 
             this.serverCertificateValidationCallback = serverCertificateValidationCallback;
             this.sslProtocols = sslProtocols;
+            this.clientCertificateCollection = clientCertificateCollection;
         }
 
         internal TlsNetworkTransport(CancellationToken cancellationToken, TcpClient tcpClient, ILoggerFactory loggerFactory, SslStream sslStream)
@@ -40,7 +43,7 @@ namespace SimpleNetworking.Networking
             SslStream sslStream = new SslStream(tcpClient.GetStream(), false, ValidateServerCertificate, null, EncryptionPolicy.RequireEncryption);
             try
             {
-                sslStream.AuthenticateAsClient(hostname, null, sslProtocols, true);
+                sslStream.AuthenticateAsClient(hostname, clientCertificateCollection, sslProtocols, true);
             }
             catch (Exception e)
             {
