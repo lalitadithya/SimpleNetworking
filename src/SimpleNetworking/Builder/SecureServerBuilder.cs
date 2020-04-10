@@ -78,8 +78,8 @@ namespace SimpleNetworking.Builder
             return this;
         }
 
-        public SecureServer Build(X509Certificate serverCertificate, bool clientCertificateRequired = false, 
-            SslProtocols sslProtocols = SslProtocols.Tls12, ClientCertificateValidationCallback clientCertificateValidationCallback = null)
+        public SecureServer Build(X509Certificate serverCertificate, bool clientCertificateRequired = false,
+            ClientCertificateValidationCallback clientCertificateValidationCallback = null, SslProtocols sslProtocols = SslProtocols.Tls12)
         {
             return new SecureServer(loggerFactory, serializer, orderingService, cancellationToken, sendIdempotencyService,
                 receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend, serverCertificate, clientCertificateRequired,

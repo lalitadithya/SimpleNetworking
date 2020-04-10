@@ -30,6 +30,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicSample", "samples\Basi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureSample", "samples\SecureSample\SecureSample.csproj", "{185633DD-E11F-4B07-9643-183282424C67}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SuperSecureSample", "samples\SuperSecureSample\SuperSecureSample.csproj", "{703D6AC7-E25C-49D3-B638-D7459A33D886}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{185633DD-E11F-4B07-9643-183282424C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{185633DD-E11F-4B07-9643-183282424C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{185633DD-E11F-4B07-9643-183282424C67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{703D6AC7-E25C-49D3-B638-D7459A33D886}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{703D6AC7-E25C-49D3-B638-D7459A33D886}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{703D6AC7-E25C-49D3-B638-D7459A33D886}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{703D6AC7-E25C-49D3-B638-D7459A33D886}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +67,7 @@ Global
 		{2C0A18BC-09A0-4181-A0D5-A848BA6A8826} = {BD2D51B8-9309-4B07-AE43-58A1E172547E}
 		{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83} = {3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}
 		{185633DD-E11F-4B07-9643-183282424C67} = {3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}
+		{703D6AC7-E25C-49D3-B638-D7459A33D886} = {3A91BC7F-805B-4F4F-A5EB-6A4AD7D2F620}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0EDBAAFB-3FA4-47D3-8A25-27340710D664}
