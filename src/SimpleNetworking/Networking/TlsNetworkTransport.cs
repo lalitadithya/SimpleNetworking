@@ -58,8 +58,14 @@ namespace SimpleNetworking.Networking
         {
             try
             {
-                serverCertificateValidationCallback(certificate, chain, sslPolicyErrors);
-                return true;
+                if (serverCertificateValidationCallback != null)
+                {
+                    return serverCertificateValidationCallback(certificate, chain, sslPolicyErrors);
+                }
+                else
+                {
+                    return sslPolicyErrors == SslPolicyErrors.None;
+                }
             }
             catch (Exception e)
             {

@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace SimpleNetworking.Server
 {
-    public delegate void ClientConnectedHandler(InsecureClient client);
+    public delegate void ClientConnectedHandler(Client.Client client);
     public interface IInsecureServer
     {
         event ClientConnectedHandler OnClientConnected;
