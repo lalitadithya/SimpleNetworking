@@ -7,6 +7,7 @@ using SimpleNetworking.Serializer;
 using SimpleNetworking.Server;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -14,6 +15,7 @@ using System.Threading;
 
 namespace SimpleNetworking.Builder
 {
+    [ExcludeFromCodeCoverage]
     public class SecureServerBuilder
     {
         private int millisecondsIntervalForPacketResend = 60 * 1000;

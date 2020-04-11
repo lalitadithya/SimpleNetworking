@@ -3,10 +3,12 @@ using Newtonsoft.Json.Linq;
 using SimpleNetworking.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace SimpleNetworking.Serializer
 {
+    [ExcludeFromCodeCoverage]
     public class JsonSerializer : ISerializer
     {
         public Packet Deserilize(byte[] data)

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace SimpleNetworking.Builder
 {
+    [ExcludeFromCodeCoverage]
     public static class Builder
     {
         public static InsecureClientBuilder InsecureClient

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace SimpleNetworking.Models
 {
+    [ExcludeFromCodeCoverage]
     public class Header
     {
         public enum PacketTypes { Data, Ack};

@@ -7,11 +7,13 @@ using SimpleNetworking.SequenceGenerator;
 using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 
 namespace SimpleNetworking.Builder
 {
+    [ExcludeFromCodeCoverage]
     public class InsecureClientBuilder
     {
         private int millisecondsIntervalForPacketResend = 60 * 1000;
