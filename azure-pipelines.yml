@@ -7,20 +7,22 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
-- script: dotnet test
-  displayName: 'dotnet test -l:"trx;LogFileName=TestResults.trx"'
-
-- task: PublishTestResults@2
+- task: DotNetCoreCLI@2
   inputs:
-    testResultsFormat: 'VSTest'
-    testResultsFiles: '**/*.trx'
-    testRunTitle: 'test result upload'
+    command: 'restore'
+    feedsToUse: 'select'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'test'
+    arguments: '--collect "Code coverage"'
+
 
