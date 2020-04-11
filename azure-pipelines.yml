@@ -18,14 +18,7 @@ steps:
 
 - task: DotNetCoreCLI@2
   inputs:
-    command: 'restore'
-    projects: 'src\SimpleNetworking'
-    feedsToUse: 'select'
-    vstsFeed: '5064eb83-12cc-4679-8495-36e4e22b72e0'
-
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: 'src\SimpleNetworking'
-    configuration: 'Release'
+    command: 'test'
+    projects: 'src/SimpleNetworking/SimpleNetworking.csproj'
+    testRunTitle: 'dotnet test'
 
