@@ -207,8 +207,7 @@ namespace SimpleNetworking.Networking
             return payload;
         }
 
-        public void StartKeepAlive(int keepAliveTimeOut = 500,
-            int maximumNumberOfKeepAliveMisses = 3, int keepAliveResponseTimeOut = 100)
+        public void StartKeepAlive(int keepAliveTimeOut, int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             this.keepAliveTimeOut = keepAliveTimeOut;
             this.maximumNumberOfKeepAliveMisses = maximumNumberOfKeepAliveMisses;

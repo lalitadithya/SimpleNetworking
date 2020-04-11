@@ -37,7 +37,7 @@ namespace SimpleNetworking.Tests.Networking
             await networkTransport.SendData(new byte[] { 100, 101 });
             GetHeaderFromStream(stream, out byte packetType, out int length);
 
-            Assert.AreEqual(1, packetType);
+            Assert.AreEqual(2, packetType);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace SimpleNetworking.Tests.Networking
             await networkTransport.SendData(new byte[] { 100, 101 });
             GetHeaderFromStream(stream, out byte packetType, out int length);
 
-            Assert.AreEqual(1, packetType);
+            Assert.AreEqual(2, packetType);
             Assert.AreEqual(2, length);
         }
 
@@ -64,7 +64,7 @@ namespace SimpleNetworking.Tests.Networking
             GetHeaderFromStream(stream, out byte packetType, out int length);
             byte[] payloadReceived = GetPayloadFromStream(stream, (int)length);
 
-            Assert.AreEqual(1, packetType);
+            Assert.AreEqual(2, packetType);
             Assert.AreEqual(2, length);
             CollectionAssert.AreEqual(payloadSent, payloadReceived);
         }
@@ -89,7 +89,7 @@ namespace SimpleNetworking.Tests.Networking
             networkTransport.StartReading();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
-            Thread.Sleep(100);
+            Thread.Sleep(1000);
 
             CollectionAssert.AreEqual(payloadSent, payloadRecived);
         }
@@ -120,7 +120,7 @@ namespace SimpleNetworking.Tests.Networking
         private static byte[] ConstructPayload(byte[] data)
         {
             byte[] payload = new byte[sizeof(byte) + sizeof(int) + data.Length];
-            payload[0] = 1;
+            payload[0] = 2;
             byte[] lengthInBytes = BitConverter.GetBytes(data.Length);
             Array.Copy(lengthInBytes, 0, payload, 1, lengthInBytes.Length);
             Array.Copy(data, 0, payload, 1 + sizeof(int), data.Length);

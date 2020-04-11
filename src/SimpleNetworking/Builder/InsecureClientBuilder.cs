@@ -23,6 +23,9 @@ namespace SimpleNetworking.Builder
         private ISendIdempotencyService<Guid, Packet> sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
         private IReceiveIdempotencyService<string> receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
         private ISequenceGenerator delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
+        private int keepAliveTimeOut = 60 * 1000;
+        private int maximumNumberOfKeepAliveMisses = 5;
+        private int keepAliveResponseTimeOut = 500;
 
         private static readonly int maximumPacketBacklog = 1000;
         private static readonly int expiryTime = 600000;
@@ -76,10 +79,29 @@ namespace SimpleNetworking.Builder
             return this;
         }
 
+        public InsecureClientBuilder WithKeepAliveTimeOut(TimeSpan keepAliveTimeOut)
+        {
+            this.keepAliveTimeOut = (int)keepAliveTimeOut.TotalMilliseconds;
+            return this;
+        }
+
+        public InsecureClientBuilder WithKeepAliveResponseTimeOut(TimeSpan keepAliveResponseTimeOut)
+        {
+            this.keepAliveResponseTimeOut = (int)keepAliveResponseTimeOut.TotalMilliseconds;
+            return this;
+        }
+
+        public InsecureClientBuilder WithMaximumNumberOfKeepAliveMisses(int maximumNumberOfKeepAliveMisses)
+        {
+            this.maximumNumberOfKeepAliveMisses = maximumNumberOfKeepAliveMisses;
+            return this;
+        }
+
         public InsecureClient Build()
         {
             return new InsecureClient(loggerFactory, serializer, orderingService, cancellationToken, sendIdempotencyService,
-                receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
+                receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend,
+                keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
     }
 }

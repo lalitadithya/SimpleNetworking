@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace SimpleNetworking.Server
 {
-    public class InsecureServer : Server, IInsecureServer
+    public class InsecureServer : Server
     {
         private TcpListener tcpListener;
 
@@ -26,11 +26,13 @@ namespace SimpleNetworking.Server
         public InsecureServer(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend)
+            int millisecondsIntervalForPacketResend, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService, 
                 sendIdempotencyService, receiveIdempotencyService, 
-                delaySequenceGenerator, millisecondsIntervalForPacketResend, cancellationToken);
+                delaySequenceGenerator, millisecondsIntervalForPacketResend, cancellationToken, keepAliveTimeOut,
+                maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
 
             if (this.loggerFactory != null)
             {
@@ -68,7 +70,8 @@ namespace SimpleNetworking.Server
             {
                 case HandshakeResults.NewClientConnected:
                     InsecureClient insecureClient = new InsecureClient(tcpNetworkTransport, loggerFactory, serializer, orderingService,
-                        cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
+                        cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend, 
+                        keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
                     clients.TryAdd(clientId, insecureClient);
                     await tcpNetworkTransport.SendData(Encoding.Unicode.GetBytes(Id));
                     OnClientConnected?.Invoke(insecureClient);

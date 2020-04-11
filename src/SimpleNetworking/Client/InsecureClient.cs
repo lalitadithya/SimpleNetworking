@@ -18,21 +18,24 @@ namespace SimpleNetworking.Client
         public InsecureClient(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend)
+            int millisecondsIntervalForPacketResend, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken, 
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, 
-                millisecondsIntervalForPacketResend);
+                millisecondsIntervalForPacketResend, keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
 
         internal InsecureClient(TcpNetworkTransport tcpNetworkTransport, ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend)
+            int millisecondsIntervalForPacketResend, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend, tcpNetworkTransport);
+                millisecondsIntervalForPacketResend, tcpNetworkTransport,
+                keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
 
         protected override NetworkTransport GetNetworkTransport()

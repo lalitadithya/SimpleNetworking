@@ -26,7 +26,8 @@ namespace SimpleNetworking.Tests.Client
             {
                 Init(null, serializer, new SimplePacketOrderingService(), CancellationToken.None,
                 new SendIdempotencyService<Guid, Packet>(10), new ReceiveIdempotencyService<string>(30 * 60 * 1000),
-                new ExponentialSequenceGenerator(60 * 1000), packetResendTime ?? 60 * 60 * 1000, networkTransport);
+                new ExponentialSequenceGenerator(60 * 1000), packetResendTime ?? 60 * 60 * 1000, networkTransport,
+                60 * 1000, 5, 500);
             }
 
             public new void StopPacketResend()
@@ -250,8 +251,7 @@ namespace SimpleNetworking.Tests.Client
             Assert.AreEqual(sentPacket.PacketHeader.IdempotencyToken, sentPacket1.PacketHeader.IdempotencyToken);
             Assert.AreEqual(sentPacket.PacketHeader.SequenceNumber, sentPacket1.PacketHeader.SequenceNumber);
             Assert.AreEqual(sentPacket.PacketHeader.ClassType, sentPacket1.PacketHeader.ClassType);
-            Assert.AreEqual(((MyData)(sentPacket.PacketPayload as JObject).ToObject(typeof(MyData))).Name,
-                ((MyData)(sentPacket1.PacketPayload as JObject).ToObject(typeof(MyData))).Name);
+            Assert.AreEqual(((MyData)sentPacket.PacketPayload).Name,((MyData)sentPacket1.PacketPayload).Name);
         }
 
         [Test]

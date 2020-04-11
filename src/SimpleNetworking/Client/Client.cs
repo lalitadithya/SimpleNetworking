@@ -35,6 +35,9 @@ namespace SimpleNetworking.Client
         private ISequenceGenerator delaySequenceGenerator;
         private IOrderingService orderingService;
         private int millisecondsIntervalForPacketResend;
+        private int keepAliveTimeOut;
+        private int maximumNumberOfKeepAliveMisses;
+        private int keepAliveResponseTimeOut;
 
         protected CancellationToken CancellationToken { get; private set; }
         protected ILoggerFactory LoggerFactory { get; private set; }
@@ -54,7 +57,8 @@ namespace SimpleNetworking.Client
         protected void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend)
+            int millisecondsIntervalForPacketResend, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             id = Guid.NewGuid().ToString();
             LoggerFactory = loggerFactory;
@@ -65,6 +69,9 @@ namespace SimpleNetworking.Client
             this.serializer = serializer;
             this.orderingService = orderingService;
             this.delaySequenceGenerator = delaySequenceGenerator;
+            this.keepAliveResponseTimeOut = keepAliveResponseTimeOut;
+            this.keepAliveTimeOut = keepAliveTimeOut;
+            this.maximumNumberOfKeepAliveMisses = maximumNumberOfKeepAliveMisses;
 
 
             CancellationToken.Register(() => Cancel());
@@ -78,11 +85,13 @@ namespace SimpleNetworking.Client
         protected void Init(ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend, NetworkTransport networkTransport)
+            int millisecondsIntervalForPacketResend, NetworkTransport networkTransport, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend);
+                millisecondsIntervalForPacketResend, keepAliveTimeOut, maximumNumberOfKeepAliveMisses,
+                keepAliveResponseTimeOut);
             InitNetworkTransport(networkTransport, false);
         }
 
@@ -285,7 +294,7 @@ namespace SimpleNetworking.Client
         private void InitNetworkTransport(NetworkTransport networkTransport, bool canReconnect)
         {
             this.networkTransport = networkTransport;
-            this.networkTransport.StartKeepAlive();
+            this.networkTransport.StartKeepAlive(keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
 
             if (canReconnect)
             {

@@ -15,6 +15,8 @@ using System.Threading;
 
 namespace SimpleNetworking.Server
 {
+    public delegate void ClientConnectedHandler(Client.Client client);
+
     public abstract class Server
     {
         private const int handshakeTimeout = 1 * 1000;
@@ -32,13 +34,17 @@ namespace SimpleNetworking.Server
         protected ISendIdempotencyService<Guid, Packet> sendIdempotencyService;
         protected IReceiveIdempotencyService<string> receiveIdempotencyService;
         protected ISequenceGenerator delaySequenceGenerator;
+        protected int keepAliveTimeOut;
+        protected int maximumNumberOfKeepAliveMisses;
+        protected int keepAliveResponseTimeOut;
 
         protected ILogger logger;
 
         protected void Init(ILoggerFactory loggerFactory, ISerializer serializer, 
             IOrderingService orderingService, ISendIdempotencyService<Guid, Packet> sendIdempotencyService, 
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator, 
-            int millisecondsIntervalForPacketResend, CancellationToken cancellationToken)
+            int millisecondsIntervalForPacketResend, CancellationToken cancellationToken, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Id = Guid.NewGuid().ToString();
             this.loggerFactory = loggerFactory;
@@ -49,6 +55,9 @@ namespace SimpleNetworking.Server
             this.receiveIdempotencyService = receiveIdempotencyService;
             this.delaySequenceGenerator = delaySequenceGenerator;
             this.millisecondsIntervalForPacketResend = millisecondsIntervalForPacketResend;
+            this.keepAliveTimeOut = keepAliveTimeOut;
+            this.maximumNumberOfKeepAliveMisses = maximumNumberOfKeepAliveMisses;
+            this.keepAliveResponseTimeOut = keepAliveResponseTimeOut;
 
             clients = new ConcurrentDictionary<string, IClient>();
         }

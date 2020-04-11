@@ -25,7 +25,8 @@ namespace SimpleNetworking.Client
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend, ServerCertificateValidationCallback serverCertificateValidationCallback, SslProtocols sslProtocols,
-            X509CertificateCollection clientCertificateCollection)
+            X509CertificateCollection clientCertificateCollection, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             this.serverCertificateValidationCallback = serverCertificateValidationCallback;
             this.sslProtocols = sslProtocols;
@@ -33,17 +34,19 @@ namespace SimpleNetworking.Client
 
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend);
+                millisecondsIntervalForPacketResend, keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
 
         internal SecureClient(TlsNetworkTransport tlsNetworkTransport, ILoggerFactory loggerFactory, ISerializer serializer, IOrderingService orderingService,
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
-            int millisecondsIntervalForPacketResend)
+            int millisecondsIntervalForPacketResend, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService, cancellationToken,
                 sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator,
-                millisecondsIntervalForPacketResend, tlsNetworkTransport);
+                millisecondsIntervalForPacketResend, tlsNetworkTransport, keepAliveTimeOut, 
+                maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
 
         protected override NetworkTransport GetNetworkTransport()

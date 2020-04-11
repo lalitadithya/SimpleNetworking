@@ -36,11 +36,13 @@ namespace SimpleNetworking.Server
             CancellationToken cancellationToken, ISendIdempotencyService<Guid, Packet> sendIdempotencyService,
             IReceiveIdempotencyService<string> receiveIdempotencyService, ISequenceGenerator delaySequenceGenerator,
             int millisecondsIntervalForPacketResend, X509Certificate serverCertificate, bool clientCertificateRequired,
-            SslProtocols sslProtocols, ClientCertificateValidationCallback clientCertificateValidationCallback)
+            SslProtocols sslProtocols, ClientCertificateValidationCallback clientCertificateValidationCallback, int keepAliveTimeOut,
+            int maximumNumberOfKeepAliveMisses, int keepAliveResponseTimeOut)
         {
             Init(loggerFactory, serializer, orderingService,
                 sendIdempotencyService, receiveIdempotencyService,
-                delaySequenceGenerator, millisecondsIntervalForPacketResend, cancellationToken);
+                delaySequenceGenerator, millisecondsIntervalForPacketResend, cancellationToken, keepAliveTimeOut,
+            maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
             this.serverCertificate = serverCertificate;
             this.clientCertificateRequired = clientCertificateRequired;
             this.sslProtocols = sslProtocols;
@@ -96,7 +98,8 @@ namespace SimpleNetworking.Server
             {
                 case HandshakeResults.NewClientConnected:
                     SecureClient secureClient = new SecureClient(tlsNetworkTransport, loggerFactory, serializer, orderingService,
-                        cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend);
+                        cancellationToken, sendIdempotencyService, receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend, keepAliveTimeOut,
+                        maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
                     clients.TryAdd(clientId, secureClient);
                     await tlsNetworkTransport.SendData(Encoding.Unicode.GetBytes(Id));
                     OnClientConnected?.Invoke(secureClient);

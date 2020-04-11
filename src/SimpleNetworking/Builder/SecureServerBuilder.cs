@@ -25,6 +25,9 @@ namespace SimpleNetworking.Builder
         private ISendIdempotencyService<Guid, Packet> sendIdempotencyService = new SendIdempotencyService<Guid, Packet>(maximumPacketBacklog);
         private IReceiveIdempotencyService<string> receiveIdempotencyService = new ReceiveIdempotencyService<string>(expiryTime);
         private ISequenceGenerator delaySequenceGenerator = new ExponentialSequenceGenerator(maximumBackoffTime);
+        private int keepAliveTimeOut = 60 * 1000;
+        private int maximumNumberOfKeepAliveMisses = 5;
+        private int keepAliveResponseTimeOut = 500;
 
         private static readonly int maximumPacketBacklog = 1000;
         private static readonly int expiryTime = 600000;
@@ -78,12 +81,30 @@ namespace SimpleNetworking.Builder
             return this;
         }
 
+        public SecureServerBuilder WithKeepAliveTimeOut(TimeSpan keepAliveTimeOut)
+        {
+            this.keepAliveTimeOut = (int)keepAliveTimeOut.TotalMilliseconds;
+            return this;
+        }
+
+        public SecureServerBuilder WithKeepAliveResponseTimeOut(TimeSpan keepAliveResponseTimeOut)
+        {
+            this.keepAliveResponseTimeOut = (int)keepAliveResponseTimeOut.TotalMilliseconds;
+            return this;
+        }
+
+        public SecureServerBuilder WithMaximumNumberOfKeepAliveMisses(int maximumNumberOfKeepAliveMisses)
+        {
+            this.maximumNumberOfKeepAliveMisses = maximumNumberOfKeepAliveMisses;
+            return this;
+        }
+
         public SecureServer Build(X509Certificate serverCertificate, bool clientCertificateRequired = false,
             ClientCertificateValidationCallback clientCertificateValidationCallback = null, SslProtocols sslProtocols = SslProtocols.Tls12)
         {
             return new SecureServer(loggerFactory, serializer, orderingService, cancellationToken, sendIdempotencyService,
                 receiveIdempotencyService, delaySequenceGenerator, millisecondsIntervalForPacketResend, serverCertificate, clientCertificateRequired,
-                sslProtocols, clientCertificateValidationCallback);
+                sslProtocols, clientCertificateValidationCallback, keepAliveTimeOut, maximumNumberOfKeepAliveMisses, keepAliveResponseTimeOut);
         }
     }
 }
