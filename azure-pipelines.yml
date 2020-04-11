@@ -15,14 +15,13 @@ variables:
 steps:
 - task: DotNetCoreCLI@2
   inputs:
-    command: 'restore'
-    feedsToUse: 'select'
-- task: DotNetCoreCLI@2
-  inputs:
     command: 'build'
+    projects: 'src\SimpleNetworking\SimpleNetworking.csproj'
+    arguments: '--configuration $(buildConfiguration)'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'test'
-    arguments: '--collect "Code coverage"'
-
+    projects: 'tests\SimpleNetworking.Tests\SimpleNetworking.Tests.csproj'
+    configuration: 'release'
+    arguments: '--configuration $(buildConfiguration) --collect "Code coverage"'
 
