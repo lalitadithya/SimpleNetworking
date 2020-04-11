@@ -94,6 +94,90 @@ namespace SimpleNetworking.Tests.Networking
             CollectionAssert.AreEqual(payloadSent, payloadRecived);
         }
 
+        [Test]
+        public void TransportShouldDropConnectionOnInvalidPacketType()
+        {
+            MemoryStream stream = new MemoryStream();
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
+
+            byte[] payloadSent = new byte[] { 100, 101 };
+            byte[] payload = ConstructPayload(payloadSent, 1);
+            stream.Write(payload, 0, payload.Length);
+            stream.Position = 0;
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            networkTransport.StartReading();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+            Thread.Sleep(1000);
+
+            Assert.IsFalse(stream.CanRead);
+            Assert.IsFalse(stream.CanWrite);
+        }
+
+        [Test]
+        public void TransportShouldSendKeepAliveAfterTimeout()
+        {
+            MemoryStream stream = new MemoryStream();
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
+
+            networkTransport.StartKeepAlive(500, 5, 10 * 1000);
+
+            Thread.Sleep(1000);
+
+            GetHeaderFromStream(stream, out byte packetType, out int length);
+            byte[] payload = GetPayloadFromStream(stream, length);
+
+            Assert.AreEqual(1, packetType);
+            Assert.AreEqual("PING", Encoding.Unicode.GetString(payload));
+
+            networkTransport.DropConnection();
+        }
+
+        [Test]
+        public void TransportShouldDropConnectionWhenKeepAliveFails()
+        {
+            MemoryStream stream = new MemoryStream();
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
+
+            networkTransport.StartKeepAlive(100, 1, 100);
+
+            Thread.Sleep(1000);
+
+            Assert.IsFalse(stream.CanRead);
+            Assert.IsFalse(stream.CanWrite);
+        }
+
+        [Test]
+        public void TransportShouldNotDropConnectionWhenKeepAliveSuccess()
+        {
+            MemoryStream stream = new MemoryStream();
+            ConcreteNetworkTransport networkTransport = new ConcreteNetworkTransport(stream, CancellationToken.None);
+
+            networkTransport.StartKeepAlive(100, 1, 500);
+
+            Thread.Sleep(200);
+
+            GetHeaderFromStream(stream, out byte packetType, out int length);
+            byte[] payload = GetPayloadFromStream(stream, length);
+
+            Assert.AreEqual("PING", Encoding.Unicode.GetString(payload));
+
+            byte[] payloadSent = Encoding.Unicode.GetBytes("PONG");
+            payload = ConstructPayload(payloadSent, 1);
+            stream.Write(payload, 0, payload.Length);
+            stream.Position = 0;
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            networkTransport.StartReading();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+            Assert.IsTrue(stream.CanRead);
+            Assert.IsTrue(stream.CanWrite);
+
+            networkTransport.DropConnection();
+        }
+
         private void GetHeaderFromStream(Stream stream, out byte packetType, out int length)
         {
             long currentPosition = stream.Position;
@@ -117,10 +201,10 @@ namespace SimpleNetworking.Tests.Networking
             return payload;
         }
 
-        private static byte[] ConstructPayload(byte[] data)
+        private static byte[] ConstructPayload(byte[] data, byte payloadType = 2)
         {
             byte[] payload = new byte[sizeof(byte) + sizeof(int) + data.Length];
-            payload[0] = 2;
+            payload[0] = payloadType;
             byte[] lengthInBytes = BitConverter.GetBytes(data.Length);
             Array.Copy(lengthInBytes, 0, payload, 1, lengthInBytes.Length);
             Array.Copy(data, 0, payload, 1 + sizeof(int), data.Length);
