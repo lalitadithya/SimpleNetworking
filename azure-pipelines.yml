@@ -16,5 +16,11 @@ steps:
 - script: dotnet build --configuration $(buildConfiguration)
   displayName: 'dotnet build $(buildConfiguration)'
 - script: dotnet test
-  displayName: 'dotnet test'
+  displayName: 'dotnet test -l:"trx;LogFileName=TestResults.trx"'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '**/*.trx'
+    testRunTitle: 'test result upload'
 
