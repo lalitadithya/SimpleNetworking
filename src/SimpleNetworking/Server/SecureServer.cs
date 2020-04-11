@@ -77,7 +77,7 @@ namespace SimpleNetworking.Server
 
         private async Task ProcessClient(TcpClient client)
         {
-            logger.LogInformation("{0} connected", client.Client.RemoteEndPoint);
+            logger?.LogInformation("{0} connected", client.Client.RemoteEndPoint);
 
             SslStream sslStream = new SslStream(client.GetStream(), false, ValidateClientCertificate);
 
@@ -87,7 +87,7 @@ namespace SimpleNetworking.Server
             }
             catch (Exception e)
             {
-                logger.LogError(e, "AuthenticateAsServerAsync threw exeception");
+                logger?.LogError(e, "AuthenticateAsServerAsync threw exeception");
                 sslStream.Close();
                 client.Close();
                 return;
@@ -138,7 +138,7 @@ namespace SimpleNetworking.Server
             }
             catch (Exception e)
             {
-                logger.LogError(e, "ValidateClientCertificate threw an exception");
+                logger?.LogError(e, "ValidateClientCertificate threw an exception");
                 return false;
             }
         }

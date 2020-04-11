@@ -23,7 +23,11 @@ namespace SimpleNetworking.Client
 
         private long sendSequenceNumber = 0;
         private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim deviceConnectedReconnectedSemaphore = new SemaphoreSlim(1, 1);
+        private bool isDisconnectedRaised = false;
         private Timer packetResendTimer;
+        private readonly SemaphoreSlim packetResentSemaphore = new SemaphoreSlim(1, 1);
+        private bool isPacketResendInProgress;
 
         private string id;
         private string serverId;
@@ -50,6 +54,9 @@ namespace SimpleNetworking.Client
 
         public void ClientReconnected(NetworkTransport networkTransport)
         {
+            this.networkTransport.OnDataReceived -= DataReceived;
+            this.networkTransport.OnConnectionLost -= ClientDisconnected;
+
             InitNetworkTransport(networkTransport, false);
             ClientReconnected();
         }
@@ -139,7 +146,7 @@ namespace SimpleNetworking.Client
             else
             {
                 networkTransport.OnDataReceived -= handshakeHandler;
-                logger.LogWarning("handshake failed");
+                logger?.LogWarning("handshake failed");
                 throw new HandshakeFailedException();
             }
         }
@@ -259,9 +266,21 @@ namespace SimpleNetworking.Client
 
         private async void ResendPacket(object state)
         {
-            foreach (var packet in sendIdempotencyService.GetValues())
+            await packetResentSemaphore.WaitAsync();
+            if (!isPacketResendInProgress)
             {
-                await SendDataUsingTransport(packet);
+                isPacketResendInProgress = true;
+                packetResentSemaphore.Release();
+                foreach (var packet in sendIdempotencyService.GetValues())
+                {
+                    await SendDataUsingTransport(packet);
+                }
+                isPacketResendInProgress = false;
+            }
+            else
+            {
+                packetResentSemaphore.Release();
+                return;
             }
         }
 
@@ -310,26 +329,38 @@ namespace SimpleNetworking.Client
 
         private void RaisePeerDeviceReconnected()
         {
-            try
+            deviceConnectedReconnectedSemaphore.Wait();
+            if (isDisconnectedRaised)
             {
-                OnPeerDeviceReconnected?.Invoke();
+                isDisconnectedRaised = false;
+                try
+                {
+                    OnPeerDeviceReconnected?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
+                }
             }
-            catch (Exception e)
-            {
-                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
-            }
+            deviceConnectedReconnectedSemaphore.Release();
         }
 
         private void RaisePeerDeviceDisconnected()
         {
-            try
+            deviceConnectedReconnectedSemaphore.Wait();
+            if (!isDisconnectedRaised)
             {
-                OnPeerDeviceDisconnected?.Invoke();
+                isDisconnectedRaised = true;
+                try
+                {
+                    OnPeerDeviceDisconnected?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
+                }
             }
-            catch (Exception e)
-            {
-                logger?.LogError(e, "OnPeerDeviceReconnected threw exception");
-            }
+            deviceConnectedReconnectedSemaphore.Release();
         }
 
         private async Task SendDataUsingTransport(Packet packet)

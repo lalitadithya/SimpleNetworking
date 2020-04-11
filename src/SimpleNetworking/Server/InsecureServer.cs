@@ -63,7 +63,7 @@ namespace SimpleNetworking.Server
 
         private async Task ProcessClient(TcpClient client)
         {
-            logger.LogInformation("{0} connected", client.Client.RemoteEndPoint);
+            logger?.LogInformation("{0} connected", client.Client.RemoteEndPoint);
 
             TcpNetworkTransport tcpNetworkTransport = new TcpNetworkTransport(cancellationToken, client, loggerFactory);
             switch(PerformHandshake(client, tcpNetworkTransport, out string clientId))

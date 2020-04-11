@@ -93,7 +93,7 @@ namespace SimpleNetworking.Server
             else
             {
                 tcpNetworkTransport.OnDataReceived -= handshakeHandler;
-                logger.LogWarning("{0} handshake failed", client.Client.RemoteEndPoint);
+                logger?.LogWarning("{0} handshake failed", client.Client.RemoteEndPoint);
                 clientId = "";
                 return HandshakeResults.HandshakeFailed;
             }
