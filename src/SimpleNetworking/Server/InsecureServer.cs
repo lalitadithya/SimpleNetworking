@@ -9,6 +9,7 @@ using SimpleNetworking.Serializer;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -40,6 +41,7 @@ namespace SimpleNetworking.Server
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public void StartListening(IPAddress localAddress, int port)
         {
             cancellationToken.Register(() => Stop());
@@ -49,6 +51,7 @@ namespace SimpleNetworking.Server
             AcceptLoop();
         }
 
+        [ExcludeFromCodeCoverage]
         private void AcceptLoop()
         {
             Task.Run(async () =>
@@ -61,6 +64,7 @@ namespace SimpleNetworking.Server
             });
         }
 
+        [ExcludeFromCodeCoverage]
         private async Task ProcessClient(TcpClient client)
         {
             logger?.LogInformation("{0} connected", client.Client.RemoteEndPoint);
@@ -88,6 +92,7 @@ namespace SimpleNetworking.Server
             }
         }
 
+        [ExcludeFromCodeCoverage]
         private void Stop()
         {
             tcpListener?.Stop();

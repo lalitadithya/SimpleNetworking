@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -36,6 +37,7 @@ namespace SimpleNetworking.Networking
             StartReading();
         }
 
+        [ExcludeFromCodeCoverage]
         public override void Connect(string hostname, int port)
         {
             TcpClient tcpClient = new TcpClient(hostname, port);
@@ -57,6 +59,7 @@ namespace SimpleNetworking.Networking
             StartReading();
         }
 
+        [ExcludeFromCodeCoverage]
         public bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             try
