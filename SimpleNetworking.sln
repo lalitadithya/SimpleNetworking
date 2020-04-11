@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{BD2D51B8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B233F04C-FC75-4217-A7C3-3797E4ABCD0D}"
 	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -28,9 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleNetworking.Tests", "t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicSample", "samples\BasicSample\BasicSample.csproj", "{3805B5AF-FB36-4EFB-A12E-EE88C9F19D83}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureSample", "samples\SecureSample\SecureSample.csproj", "{185633DD-E11F-4B07-9643-183282424C67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecureSample", "samples\SecureSample\SecureSample.csproj", "{185633DD-E11F-4B07-9643-183282424C67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SuperSecureSample", "samples\SuperSecureSample\SuperSecureSample.csproj", "{703D6AC7-E25C-49D3-B638-D7459A33D886}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SuperSecureSample", "samples\SuperSecureSample\SuperSecureSample.csproj", "{703D6AC7-E25C-49D3-B638-D7459A33D886}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
