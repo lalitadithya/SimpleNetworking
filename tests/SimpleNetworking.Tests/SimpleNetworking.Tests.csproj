@@ -13,11 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Serializer\" />
-    <Folder Include="Server\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\SimpleNetworking\SimpleNetworking.csproj" />
   </ItemGroup>
 
