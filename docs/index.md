@@ -5,6 +5,7 @@
 ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/lalitadithya/simplenetworking/1)
 ![GitHub](https://img.shields.io/github/license/lalitadithya/simplenetworking)
 ![Nuget](https://img.shields.io/nuget/v/simplenetworking)
+[![Documentation Status](https://readthedocs.org/projects/simplenetworking/badge/?version=latest)](https://simplenetworking.readthedocs.io/en/latest/?badge=latest)
 
 Simple networking an easy to use networking library for .NET Core that guarantees exactly-once, in-order delivery of .NET objects while surviving network partitions. The library includes support for TLS 1.2, TLS 1.3 and mutual TLS 1.2/1.3. If you like SimpleNetworking, please consider starring the repository and spreading the word about SimpleNetworking. 
 

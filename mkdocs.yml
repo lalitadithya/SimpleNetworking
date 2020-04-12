@@ -3,11 +3,7 @@ nav:
     - Home: index.md
     - 'Getting Started': 'GettingStarted.md'
 theme:
-    name: readthedocs
-    highlightjs: true
-    hljs_languages:
-        - powershell
-        - cs
+    name: readthedocs    
 markdown_extensions:
     - codehilite
 repo_url: https://github.com/lalitadithya/SimpleNetworking
