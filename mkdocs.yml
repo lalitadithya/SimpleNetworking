@@ -1,0 +1,14 @@
+site_name: Simple Networking
+nav:
+    - Home: index.md
+    - 'Getting Started': 'GettingStarted.md'
+theme:
+    name: readthedocs
+    highlightjs: true
+    hljs_languages:
+        - powershell
+        - cs
+markdown_extensions:
+    - codehilite
+repo_url: https://github.com/lalitadithya/SimpleNetworking
+site_author: 'Lalit Adithya'
